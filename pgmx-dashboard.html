@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PGMx — GFEX Platinum Activity Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+<style>
+  :root {
+    --bg:        #05080f;
+    --surface:   #0b0f1a;
+    --surface2:  #0f1422;
+    --border:    #1a2035;
+    --neon-blue:   #00c8ff;
+    --neon-green:  #00ff88;
+    --neon-pink:   #ff2d78;
+    --neon-orange: #ff8c00;
+    --neon-purple: #b347ff;
+    --text:      #dde8ff;
+    --muted:     #4a5580;
+    --gain:      #00ff88;
+    --loss:      #ff2d78;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* animated grid */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,200,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    animation: gridDrift 25s linear infinite;
+    pointer-events:none; z-index:0;
+  }
+  @keyframes gridDrift { to { background-position: 48px 48px; } }
+
+  /* orb */
+  body::after {
+    content:'';
+    position:fixed; width:700px; height:700px;
+    background: radial-gradient(circle, rgba(0,200,255,0.06) 0%, transparent 65%);
+    bottom:-200px; left:-200px;
+    pointer-events:none; z-index:0;
+    animation: orbPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes orbPulse { from{transform:scale(1);} to{transform:scale(1.25);} }
+
+  .container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 36px 72px;
+    position: relative; z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 36px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+
+  .logo-block { line-height: 1; }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.4rem;
+    letter-spacing: 0.06em;
+    background: linear-gradient(120deg, var(--neon-blue) 0%, #6af0ff 40%, var(--neon-purple) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 18px rgba(0,200,255,0.45));
+  }
+
+  .logo-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .logo-tagline {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    color: var(--neon-blue);
+    opacity: 0.7;
+    margin-top: 3px;
+  }
+
+  .header-right {
+    display: flex; align-items: center; gap: 20px;
+  }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,255,136,0.07);
+    border: 1px solid rgba(0,255,136,0.25);
+    padding: 8px 16px; border-radius: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.16em;
+    color: var(--neon-green);
+  }
+  .live-dot {
+    width:7px; height:7px; background:var(--neon-green);
+    border-radius:50%; box-shadow:0 0 7px var(--neon-green);
+    animation: blink 1.3s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
+
+  .clock {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.1em; color: var(--muted);
+  }
+
+  /* ── STAT CARDS ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 36px;
+    opacity:0; transform:translateY(18px);
+    animation: fadeUp 0.55s ease forwards 0.15s;
+  }
+  @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 2px solid;
+    padding: 18px 20px;
+    border-radius: 2px;
+    position: relative; overflow:hidden;
+    transition: transform 0.18s, box-shadow 0.18s;
+    cursor: default;
+  }
+  .stat-card:hover { transform:translateY(-3px); box-shadow:0 14px 40px rgba(0,0,0,0.45); }
+  .stat-card::before {
+    content:''; position:absolute; inset:0;
+    opacity:0.05;
+    background:linear-gradient(135deg, currentColor 0%, transparent 55%);
+  }
+  .stat-card:nth-child(1){ border-top-color:var(--neon-blue);   color:var(--neon-blue);   }
+  .stat-card:nth-child(2){ border-top-color:var(--neon-green);  color:var(--neon-green);  }
+  .stat-card:nth-child(3){ border-top-color:var(--neon-pink);   color:var(--neon-pink);   }
+  .stat-card:nth-child(4){ border-top-color:var(--neon-orange); color:var(--neon-orange); }
+  .stat-card:nth-child(5){ border-top-color:var(--neon-purple); color:var(--neon-purple); }
+
+  .stat-label {
+    font-family:'DM Mono',monospace;
+    font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:8px;
+  }
+  .stat-value {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:2rem; letter-spacing:0.03em; line-height:1;
+    color:var(--text);
+  }
+  .stat-change {
+    font-family:'DM Mono',monospace;
+    font-size:0.68rem; margin-top:5px;
+  }
+  .stat-change.up   { color:var(--gain); }
+  .stat-change.down { color:var(--loss); }
+  .stat-change.neu  { color:var(--muted); }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1.4rem; letter-spacing:0.12em; color:var(--text);
+    margin-bottom:14px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .section-title::after {
+    content:''; flex:1; height:1px;
+    background:linear-gradient(90deg, var(--border), transparent);
+  }
+
+  /* ── OI TABLE ── */
+  .table-wrap {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:2px; overflow:hidden; margin-bottom:44px;
+    opacity:0; transform:translateY(18px);
+    animation: fadeUp 0.55s ease forwards 0.3s;
+  }
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:var(--surface2); border-bottom:1px solid var(--border); }
+  th {
+    font-family:'DM Mono',monospace;
+    font-size:0.62rem; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--muted); padding:13px 20px; text-align:left;
+  }
+  tbody tr {
+    border-bottom:1px solid rgba(26,32,53,0.7);
+    transition:background 0.14s;
+  }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:rgba(0,200,255,0.04); }
+  td {
+    padding:13px 20px;
+    font-size:0.86rem;
+    font-family:'DM Mono',monospace;
+  }
+
+  .contract-code {
+    font-family:'Syne',sans-serif; font-weight:700;
+    font-size:0.92rem; letter-spacing:0.05em;
+    color:var(--neon-blue);
+  }
+  .contract-name { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+
+  .pill {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 10px; border-radius:2px;
+    font-size:0.7rem; font-weight:600; letter-spacing:0.08em;
+  }
+  .pill.front { background:rgba(0,255,136,0.1); color:var(--gain); border:1px solid rgba(0,255,136,0.2); }
+  .pill.back  { background:rgba(0,200,255,0.08); color:var(--neon-blue); border:1px solid rgba(0,200,255,0.18); }
+
+  .chg-up   { color:var(--gain); }
+  .chg-down { color:var(--loss); }
+  .chg-neu  { color:var(--muted); }
+
+  .bar-cell { display:flex; align-items:center; gap:8px; }
+  .mini-bar { height:3px; border-radius:2px; min-width:3px; }
+
+  /* ── CHARTS GRID ── */
+  .charts-grid {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:20px;
+    opacity:0; transform:translateY(18px);
+    animation: fadeUp 0.55s ease forwards 0.45s;
+  }
+
+  .chart-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:2px; padding:26px;
+    position:relative; overflow:hidden;
+  }
+  .chart-card::before {
+    content:''; position:absolute;
+    top:0; left:0; right:0; height:2px;
+  }
+  .chart-card.blue-stripe::before  { background:linear-gradient(90deg,var(--neon-blue),var(--neon-purple)); }
+  .chart-card.orange-stripe::before{ background:linear-gradient(90deg,var(--neon-orange),var(--neon-pink)); }
+
+  .chart-header {
+    display:flex; justify-content:space-between; align-items:flex-start;
+    margin-bottom:20px;
+  }
+  .chart-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1.05rem; letter-spacing:0.1em; color:var(--text);
+  }
+  .chart-sub {
+    font-family:'DM Mono',monospace;
+    font-size:0.62rem; color:var(--muted); letter-spacing:0.12em; margin-top:3px;
+  }
+  .chart-kpi {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1.5rem; text-align:right; color:var(--text);
+  }
+  .chart-kpi-sub {
+    font-family:'DM Mono',monospace;
+    font-size:0.62rem; text-align:right; margin-top:2px;
+  }
+
+  .disclaimer {
+    font-family:'DM Mono',monospace;
+    font-size:0.6rem; letter-spacing:0.1em;
+    color:var(--muted); text-align:center;
+    margin-top:32px; padding-top:20px;
+    border-top:1px solid var(--border);
+    opacity:0.7;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-block">
+      <div class="logo">PGMx</div>
+      <div class="logo-sub">Activity Dashboard</div>
+      <div class="logo-tagline">A first take on GFEX PGM data</div>
+    </div>
+    <div class="header-right">
+      <div class="clock" id="clock">--</div>
+      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    </div>
+  </header>
+
+  <!-- STAT CARDS — key GFEX platinum metrics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Front Month</div>
+      <div class="stat-value">PT2504</div>
+      <div class="stat-change up">▲ +2.14% day</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Settle Price (CNY/g)</div>
+      <div class="stat-value">249.60</div>
+      <div class="stat-change up">▲ +5.24 vs prev</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total OI (lots)</div>
+      <div class="stat-value">42,810</div>
+      <div class="stat-change down">▼ −1.3% DoD</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Daily Volume (lots)</div>
+      <div class="stat-value">38,460</div>
+      <div class="stat-change up">▲ +8.7% DoD</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Warehouse Stock (kg)</div>
+      <div class="stat-value">1,824</div>
+      <div class="stat-change neu">— unchanged</div>
+    </div>
+  </div>
+
+  <!-- OI TABLE -->
+  <div class="section-title">Open Interest by Contract</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Contract</th>
+          <th>Expiry</th>
+          <th>Type</th>
+          <th>Settle (CNY/g)</th>
+          <th>Open Interest (lots)</th>
+          <th>OI Chg DoD</th>
+          <th>OI Chg WoW</th>
+          <th>Volume (lots)</th>
+          <th>Turnover (CNY mn)</th>
+        </tr>
+      </thead>
+      <tbody id="oi-table"></tbody>
+    </table>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="section-title">Market Charts</div>
+  <div class="charts-grid">
+
+    <!-- Candlestick -->
+    <div class="chart-card blue-stripe">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">PT2504 — Daily OHLCV · Last 60 Sessions</div>
+          <div class="chart-sub">GFEX PLATINUM FRONT MONTH · CNY/G · ILLUSTRATIVE DATA</div>
+        </div>
+        <div>
+          <div class="chart-kpi" style="color:var(--neon-blue)">249.60</div>
+          <div class="chart-kpi-sub" style="color:var(--gain)">▲ +2.14% TODAY</div>
+        </div>
+      </div>
+      <canvas id="candleChart" style="max-height:300px;"></canvas>
+    </div>
+
+    <!-- Volume by Hour -->
+    <div class="chart-card orange-stripe">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Volume by Hour — Today's Session</div>
+          <div class="chart-sub">LOTS TRADED PER 30-MIN SLOT · GFEX SESSION 09:00–15:00 CST</div>
+        </div>
+        <div>
+          <div class="chart-kpi" style="color:var(--neon-orange)">38,460</div>
+          <div class="chart-kpi-sub" style="color:var(--neon-orange)">TOTAL DAY VOLUME</div>
+        </div>
+      </div>
+      <canvas id="volHourChart" style="max-height:240px;"></canvas>
+    </div>
+
+  </div>
+
+  <div class="disclaimer">
+    ⚠ ILLUSTRATIVE DATA — GFEX daily statistics are published post-session and require authenticated data access. Values shown are representative placeholders based on publicly reported contract structure. PT = Platinum Futures, GFEX (Guangzhou Futures Exchange). Last updated: <span id="lastUpdate">—</span>
+  </div>
+
+</div>
+
+<script>
+// ── CLOCK ──────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('clock').textContent =
+    `${days[now.getDay()]} ${pad(now.getDate())} ${months[now.getMonth()]} ${now.getFullYear()} · ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} CST`;
+  document.getElementById('lastUpdate').textContent =
+    `${pad(now.getDate())} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── OI TABLE DATA ──────────────────────────────────────
+const contracts = [
+  { code:'PT2504', expiry:'Apr 2026', settle:249.60, oi:18420, dodPct:+2.14, wowPct:+8.40, vol:21300, turn:531.4, front:true  },
+  { code:'PT2506', expiry:'Jun 2026', settle:251.80, oi:13660, dodPct:-0.72, wowPct:+3.10, vol:9820,  turn:247.2, front:false },
+  { code:'PT2508', expiry:'Aug 2026', settle:253.20, oi:6340,  dodPct:-1.85, wowPct:-2.30, vol:4880,  turn:123.5, front:false },
+  { code:'PT2510', expiry:'Oct 2026', settle:254.40, oi:3090,  dodPct:+0.45, wowPct:+5.60, vol:1980,  turn: 50.3, front:false },
+  { code:'PT2512', expiry:'Dec 2026', settle:255.90, oi:1300,  dodPct:-3.12, wowPct:-1.80, vol: 480,  turn: 12.3, front:false },
+];
+
+const tbody = document.getElementById('oi-table');
+contracts.forEach(c => {
+  const dodClass = c.dodPct > 0 ? 'chg-up' : c.dodPct < 0 ? 'chg-down' : 'chg-neu';
+  const wowClass = c.wowPct > 0 ? 'chg-up' : c.wowPct < 0 ? 'chg-down' : 'chg-neu';
+  const dodStr = (c.dodPct > 0 ? '▲ +' : '▼ ') + Math.abs(c.dodPct).toFixed(2) + '%';
+  const wowStr = (c.wowPct > 0 ? '▲ +' : '▼ ') + Math.abs(c.wowPct).toFixed(2) + '%';
+  const barW = Math.min(Math.abs(c.dodPct) * 18, 70);
+  const barColor = c.dodPct >= 0 ? 'var(--neon-green)' : 'var(--neon-pink)';
+  tbody.innerHTML += `
+    <tr>
+      <td>
+        <div class="contract-code">${c.code}</div>
+        <div class="contract-name">GFEX Platinum Futures</div>
+      </td>
+      <td style="color:var(--muted)">${c.expiry}</td>
+      <td><span class="pill ${c.front?'front':'back'}">${c.front?'◆ FRONT':'DEFERRED'}</span></td>
+      <td style="color:var(--text)">${c.settle.toFixed(2)}</td>
+      <td style="color:var(--text); font-weight:600">${c.oi.toLocaleString()}</td>
+      <td>
+        <div class="bar-cell">
+          <div class="mini-bar" style="width:${barW}px;background:${barColor}"></div>
+          <span class="${dodClass}">${dodStr}</span>
+        </div>
+      </td>
+      <td class="${wowClass}">${wowStr}</td>
+      <td style="color:var(--muted)">${c.vol.toLocaleString()}</td>
+      <td style="color:var(--muted)">${c.turn.toFixed(1)}</td>
+    </tr>`;
+});
+
+// ── CHART DEFAULTS ──────────────────────────────────────
+Chart.defaults.color = '#4a5580';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 11;
+const gridCol = 'rgba(26,32,53,0.9)';
+
+// ── CANDLESTICK DATA ────────────────────────────────────
+// Generate 60 days of realistic PT2504 OHLCV data
+function genCandles(days, startPrice) {
+  const data = [];
+  const vol  = [];
+  let price = startPrice;
+  // go back 60 trading days from today
+  const end = new Date('2026-03-20');
+  const dates = [];
+  let d = new Date(end);
+  while (dates.length < days) {
+    if (d.getDay() !== 0 && d.getDay() !== 6) dates.unshift(new Date(d));
+    d.setDate(d.getDate() - 1);
+  }
+  dates.forEach(dt => {
+    const open  = price;
+    const move  = (Math.random() - 0.47) * 3.2;
+    const close = +(open + move).toFixed(2);
+    const hi    = +(Math.max(open, close) + Math.random() * 1.4).toFixed(2);
+    const lo    = +(Math.min(open, close) - Math.random() * 1.4).toFixed(2);
+    const v     = Math.floor(8000 + Math.random() * 22000);
+    data.push({ x: dt.getTime(), o: open, h: hi, l: lo, c: close });
+    vol.push({ x: dt.getTime(), y: v });
+    price = close;
+  });
+  return { data, vol };
+}
+
+const { data: candleData, vol: volData } = genCandles(60, 215);
+
+const candleCtx = document.getElementById('candleChart').getContext('2d');
+
+// Volume gradient bars
+const upColor   = 'rgba(0,255,136,0.75)';
+const downColor = 'rgba(255,45,120,0.75)';
+
+new Chart(candleCtx, {
+  data: {
+    datasets: [
+      {
+        type: 'candlestick',
+        label: 'PT2504',
+        data: candleData,
+        color: {
+          up:   '#00ff88',
+          down: '#ff2d78',
+          unchanged: '#4a5580'
+        },
+        borderColor: {
+          up:   '#00ff88',
+          down: '#ff2d78',
+          unchanged: '#4a5580'
+        },
+        yAxisID: 'yPrice',
+        order: 1
+      },
+      {
+        type: 'bar',
+        label: 'Volume',
+        data: volData,
+        backgroundColor: candleData.map((c,i) => c.c >= c.o ? 'rgba(0,255,136,0.25)' : 'rgba(255,45,120,0.25)'),
+        borderColor: 'transparent',
+        yAxisID: 'yVol',
+        order: 2,
+        borderRadius: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode:'index', intersect:false },
+    plugins: {
+      legend: { display:false },
+      tooltip: {
+        backgroundColor: '#0b0f1a',
+        borderColor: '#1a2035',
+        borderWidth: 1,
+        callbacks: {
+          label: ctx => {
+            if (ctx.dataset.type === 'candlestick') {
+              const d = ctx.raw;
+              return [`O: ${d.o}  H: ${d.h}  L: ${d.l}  C: ${d.c}`];
+            }
+            return `Vol: ${ctx.parsed.y.toLocaleString()} lots`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'timeseries',
+        time: { unit:'day', tooltipFormat:'dd MMM yyyy' },
+        grid: { color: gridCol },
+        ticks: { maxTicksLimit:10 }
+      },
+      yPrice: {
+        position:'left',
+        grid: { color: gridCol },
+        ticks: { callback: v => v.toFixed(0) + '' }
+      },
+      yVol: {
+        position:'right',
+        grid: { display:false },
+        ticks: { callback: v => (v/1000).toFixed(0)+'k', maxTicksLimit:5 },
+        max: Math.max(...volData.map(v=>v.y)) * 4
+      }
+    }
+  }
+});
+
+// ── VOLUME BY HOUR ──────────────────────────────────────
+const slots = [
+  '09:00','09:30','10:00','10:30','11:00','11:30',
+  '13:00','13:30','14:00','14:30','15:00'
+];
+const slotVol = [4820, 3910, 2740, 2060, 1840, 1520, 2180, 2980, 4110, 5640, 6660];
+
+const vhCtx = document.getElementById('volHourChart').getContext('2d');
+
+// build gradient per bar — morning open & close spikes in orange, lunch dip cool
+const barColors = slotVol.map((v,i) => {
+  const g = vhCtx.createLinearGradient(0, 0, 0, 200);
+  if (i === 0 || i === slotVol.length - 1) {
+    g.addColorStop(0, 'rgba(255,140,0,0.95)');
+    g.addColorStop(1, 'rgba(255,45,120,0.5)');
+  } else if (i >= 5 && i <= 6) {
+    g.addColorStop(0, 'rgba(0,200,255,0.5)');
+    g.addColorStop(1, 'rgba(0,200,255,0.15)');
+  } else {
+    g.addColorStop(0, 'rgba(0,200,255,0.85)');
+    g.addColorStop(1, 'rgba(179,71,255,0.4)');
+  }
+  return g;
+});
+
+new Chart(vhCtx, {
+  type:'bar',
+  data:{
+    labels: slots,
+    datasets:[{
+      label:'Volume (lots)',
+      data: slotVol,
+      backgroundColor: barColors,
+      borderRadius: 2,
+      borderSkipped: false
+    }]
+  },
+  options:{
+    responsive:true,
+    plugins:{
+      legend:{ display:false },
+      tooltip:{
+        backgroundColor:'#0b0f1a',
+        borderColor:'#1a2035',
+        borderWidth:1,
+        callbacks:{ label: ctx => ` ${ctx.parsed.y.toLocaleString()} lots` }
+      }
+    },
+    scales:{
+      x:{ grid:{ display:false } },
+      y:{
+        grid:{ color:gridCol },
+        ticks:{ callback: v => (v/1000).toFixed(0)+'k' }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
