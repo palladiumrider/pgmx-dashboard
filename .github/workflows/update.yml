@@ -153,43 +153,41 @@ jobs:
           def fetch_spot():
               """Fetch platinum spot (USD/oz) and CNY/USD rate at 8am London."""
               pt_spot, cny_usd = None, None
-              # Try api.metals.live — returns list of {metal, price} objects
-              for endpoint in [
-                  "https://api.metals.live/v1/spot",
-                  "https://api.metals.live/v1/spot/platinum",
-              ]:
+
+              # Platinum spot via Yahoo Finance (no key, no SSL issues)
+              # XPT=X is the platinum spot ticker on Yahoo Finance
+              try:
+                  url = "https://query1.finance.yahoo.com/v8/finance/chart/XPTUSD=X"
+                  headers = {"User-Agent": "Mozilla/5.0"}
+                  r = requests.get(url, headers=headers, timeout=20)
+                  r.raise_for_status()
+                  data = r.json()
+                  meta = data["chart"]["result"][0]["meta"]
+                  pt_spot = float(meta.get("regularMarketPrice") or meta.get("previousClose"))
+                  print(f"  Platinum spot (Yahoo): {pt_spot} USD/oz")
+              except Exception as e:
+                  print(f"  Yahoo Finance failed: {e}")
+
+              # Fallback: try http (not https) for metals.live
+              if not pt_spot:
                   try:
-                      r = requests.get(endpoint, timeout=20, headers={"Accept": "application/json"})
+                      r = requests.get("http://api.metals.live/v1/spot", timeout=20,
+                                        headers={"Accept": "application/json"})
                       r.raise_for_status()
                       data = r.json()
-                      print(f"  metals.live raw ({endpoint}): {str(data)[:200]}")
-                      # Format 1: list of {metal, price}
                       if isinstance(data, list):
                           for item in data:
-                              if isinstance(item, dict):
-                                  metal = str(item.get("metal","")).lower()
-                                  if metal in ("platinum","xpt","pt"):
-                                      pt_spot = float(item.get("price", item.get("bid", 0)))
-                                      break
-                          if not pt_spot and data:
-                              # single item list
-                              item = data[0]
-                              if "price" in item:
-                                  pt_spot = float(item["price"])
-                      # Format 2: dict with platinum key
-                      elif isinstance(data, dict):
-                          for key in ("platinum","XPT","xpt","price"):
-                              if key in data:
-                                  val = data[key]
-                                  pt_spot = float(val) if not isinstance(val, dict) else float(val.get("price",0))
+                              if str(item.get("metal","")).lower() in ("platinum","xpt"):
+                                  pt_spot = float(item.get("price",0))
                                   break
-                      if pt_spot:
-                          print(f"  Platinum spot: {pt_spot} USD/oz")
-                          break
+                      print(f"  Platinum spot (metals.live http): {pt_spot} USD/oz")
                   except Exception as e:
-                      print(f"  metals.live {endpoint} failed: {e}")
+                      print(f"  metals.live http failed: {e}")
+
               if not pt_spot:
                   print("  WARNING: could not fetch platinum spot price")
+
+              # CNY/USD via Frankfurter (reliable, no key)
               try:
                   r = requests.get("https://api.frankfurter.dev/v1/latest?base=CNY&symbols=USD", timeout=15)
                   r.raise_for_status()
@@ -198,6 +196,7 @@ jobs:
                   print(f"  CNY/USD rate: {cny_usd}")
               except Exception as e:
                   print(f"  CNY/USD fetch failed: {e}")
+
               return pt_spot, cny_usd
 
           def calc_premium(gfex_settle_cny_g, pt_spot_usd_oz, cny_usd):
