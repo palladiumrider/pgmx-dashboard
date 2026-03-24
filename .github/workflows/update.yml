@@ -158,51 +158,50 @@ jobs:
           PD_FWD_ADJ  = -0.005   # palladium: -0.5% p.a.
           # ────────────────────────────────────────────────────────────────────
 
-          def fetch_spot():
-              """Fetch platinum spot (USD/oz) and CNY/USD rate at 8am London."""
-              import os
-              pt_spot, cny_usd = None, None
-
-              # metalpriceapi.com — reliable server-to-server, 100 req/month free
+          def fetch_metals(date_str=None):
+              """Fetch PT and PD spot prices (USD/oz) and CNY/USD for a given date.
+              date_str=None means latest. date_str='YYYY-MM-DD' fetches historical."""
               api_key = os.environ.get("METALS_API_KEY", "")
-              if api_key:
-                  try:
-                      r = requests.get(
-                          f"https://api.metalpriceapi.com/v1/latest?api_key={api_key}&base=USD&currencies=XPT",
-                          timeout=20
-                      )
-                      r.raise_for_status()
-                      data = r.json()
-                      if data.get("success"):
-                          # returns XPT as oz per USD, so invert to get USD per oz
-                          xpt_rate = data["rates"].get("XPT")
-                          if xpt_rate:
-                              pt_spot = round(1.0 / float(xpt_rate), 2)
-                              print(f"  Platinum spot (metalpriceapi): {pt_spot} USD/oz")
-                      else:
-                          print(f"  metalpriceapi error: {data}")
-                  except Exception as e:
-                      print(f"  metalpriceapi failed: {e}")
-              else:
+              if not api_key:
                   print("  WARNING: METALS_API_KEY secret not set")
+                  return None, None, None
 
-              if not pt_spot:
-                  print("  WARNING: could not fetch platinum spot price")
+              pt_spot, pd_spot, cny_usd = None, None, None
 
-              # CNY/USD via Frankfurter — confirmed working
+              # Metals: XPT (platinum) and XPD (palladium)
               try:
-                  r = requests.get(
-                      "https://api.frankfurter.dev/v1/latest?base=CNY&symbols=USD",
-                      timeout=15
-                  )
+                  if date_str:
+                      url = f"https://api.metalpriceapi.com/v1/{date_str}?api_key={api_key}&base=USD&currencies=XPT,XPD"
+                  else:
+                      url = f"https://api.metalpriceapi.com/v1/latest?api_key={api_key}&base=USD&currencies=XPT,XPD"
+                  r = requests.get(url, timeout=20)
                   r.raise_for_status()
                   data = r.json()
-                  cny_usd = float(data["rates"]["USD"])
-                  print(f"  CNY/USD rate: {cny_usd}")
+                  if data.get("success"):
+                      xpt = data["rates"].get("XPT")
+                      xpd = data["rates"].get("XPD")
+                      if xpt: pt_spot = round(1.0 / float(xpt), 2)
+                      if xpd: pd_spot = round(1.0 / float(xpd), 2)
+                      label = date_str or "latest"
+                      print(f"  [{label}] PT: {pt_spot} USD/oz | PD: {pd_spot} USD/oz")
+                  else:
+                      print(f"  metalpriceapi error ({date_str}): {data.get('message')}")
               except Exception as e:
-                  print(f"  CNY/USD fetch failed: {e}")
+                  print(f"  metalpriceapi failed ({date_str}): {e}")
 
-              return pt_spot, cny_usd
+              # CNY/USD via Frankfurter
+              try:
+                  fx_url = (f"https://api.frankfurter.dev/v1/{date_str}?base=CNY&symbols=USD"
+                            if date_str else
+                            "https://api.frankfurter.dev/v1/latest?base=CNY&symbols=USD")
+                  r = requests.get(fx_url, timeout=15)
+                  r.raise_for_status()
+                  cny_usd = float(r.json()["rates"]["USD"])
+                  print(f"  [{date_str or 'latest'}] CNY/USD: {cny_usd}")
+              except Exception as e:
+                  print(f"  CNY/USD fetch failed ({date_str}): {e}")
+
+              return pt_spot, pd_spot, cny_usd
 
           def calc_premium(gfex_settle_cny_g, spot_usd_oz, cny_usd, fwd_adj):
               """Convert GFEX settle to USD/oz ex-VAT and compare to
@@ -277,9 +276,14 @@ jobs:
               date_today = dates[0]; date_dod = dates[1]
               date_wow   = dates[5] if len(dates) >= 6 else dates[-1]
 
-              # Fetch spot price and FX rate at 8am London
+              # Fetch spot prices and FX rates for today, DoD, WoW
               print("Fetching spot prices...")
-              pt_spot_usd_oz, cny_usd = fetch_spot()
+              pt_spot_usd_oz, pd_spot_usd_oz_today, cny_usd       = fetch_metals()
+              pt_spot_dod,    pd_spot_dod,    cny_usd_dod          = fetch_metals(date_dod)
+              pt_spot_wow,    pd_spot_wow,    cny_usd_wow           = fetch_metals(date_wow)
+              # Use today's CNY/USD as primary; fall back per period if needed
+              cny_usd_dod = cny_usd_dod or cny_usd
+              cny_usd_wow = cny_usd_wow or cny_usd
 
               # Get GFEX settles for today, DoD, WoW
               def get_settle(cs_data, date_str):
@@ -302,33 +306,22 @@ jobs:
               gfex_settle_pd_dod = get_settle(pd_data, date_dod)
               gfex_settle_pd_wow = get_settle(pd_data, date_wow)
 
-              # Today premiums
+              # Today premiums — today GFEX settle + today spot + today CNY/USD
               pt_prem_usd, pt_prem_pct, pt_fwd_usd_oz, days_to_expiry = calc_premium(gfex_settle_pt, pt_spot_usd_oz, cny_usd, PT_FWD_ADJ) if all([gfex_settle_pt, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
 
-              # Palladium spot via metalpriceapi (Yahoo blocks servers)
-              pd_spot_usd_oz = None
-              api_key_main = os.environ.get("METALS_API_KEY", "")
-              if api_key_main:
-                  try:
-                      r = requests.get(f"https://api.metalpriceapi.com/v1/latest?api_key={api_key_main}&base=USD&currencies=XPD", timeout=20)
-                      r.raise_for_status()
-                      data = r.json()
-                      if data.get("success"):
-                          xpd = data["rates"].get("XPD")
-                          if xpd: pd_spot_usd_oz = round(1.0 / float(xpd), 2)
-                          print(f"  Palladium spot (metalpriceapi): {pd_spot_usd_oz} USD/oz")
-                  except Exception as e:
-                      print(f"  Palladium spot failed: {e}")
+              # Palladium spot already fetched via fetch_metals above
+              pd_spot_usd_oz = pd_spot_usd_oz_today
 
               pd_prem_usd, pd_prem_pct, pd_fwd_usd_oz, _ = calc_premium(gfex_settle_pd, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ) if all([gfex_settle_pd, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
+              print(f"  Today: PT={pt_prem_pct}% PD={pd_prem_pct}% | DoD: PT={pt_prem_pct_dod}% PD={pd_prem_pct_dod}% | WoW: PT={pt_prem_pct_wow}% PD={pd_prem_pct_wow}%")
 
-              # DoD premiums — use same spot (best approximation for yesterday)
-              pt_prem_usd_dod, pt_prem_pct_dod, pt_fwd_dod, _ = calc_premium(gfex_settle_pt_dod, pt_spot_usd_oz, cny_usd, PT_FWD_ADJ) if all([gfex_settle_pt_dod, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
-              pd_prem_usd_dod, pd_prem_pct_dod, pd_fwd_dod, _ = calc_premium(gfex_settle_pd_dod, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ) if all([gfex_settle_pd_dod, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
+              # DoD premiums — yesterday GFEX settle + yesterday spot + yesterday CNY/USD
+              pt_prem_usd_dod, pt_prem_pct_dod, pt_fwd_dod, _ = calc_premium(gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod, PT_FWD_ADJ) if all([gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod]) else (None, None, None, None)
+              pd_prem_usd_dod, pd_prem_pct_dod, pd_fwd_dod, _ = calc_premium(gfex_settle_pd_dod, pd_spot_dod, cny_usd_dod, PD_FWD_ADJ) if all([gfex_settle_pd_dod, pd_spot_dod, cny_usd_dod]) else (None, None, None, None)
 
-              # WoW premiums — use same spot
-              pt_prem_usd_wow, pt_prem_pct_wow, pt_fwd_wow, _ = calc_premium(gfex_settle_pt_wow, pt_spot_usd_oz, cny_usd, PT_FWD_ADJ) if all([gfex_settle_pt_wow, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
-              pd_prem_usd_wow, pd_prem_pct_wow, pd_fwd_wow, _ = calc_premium(gfex_settle_pd_wow, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ) if all([gfex_settle_pd_wow, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
+              # WoW premiums — last week GFEX settle + last week spot + last week CNY/USD
+              pt_prem_usd_wow, pt_prem_pct_wow, pt_fwd_wow, _ = calc_premium(gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow, PT_FWD_ADJ) if all([gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow]) else (None, None, None, None)
+              pd_prem_usd_wow, pd_prem_pct_wow, pd_fwd_wow, _ = calc_premium(gfex_settle_pd_wow, pd_spot_wow, cny_usd_wow, PD_FWD_ADJ) if all([gfex_settle_pd_wow, pd_spot_wow, cny_usd_wow]) else (None, None, None, None)
 
               usd_cny = round(1.0 / cny_usd, 4) if cny_usd else None
 
