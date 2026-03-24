@@ -326,12 +326,20 @@ async function handleSubmit(e) {
         <div class="gauge-row"><span>GFEX settle</span><span id="pt-settle-val">—</span></div>
         <div class="gauge-row"><span>Loco London fwd</span><span id="pt-fwd-val">—</span></div>
         <div class="gauge-row"><span>USD/CNY</span><span id="pt-cny-val">—</span></div>
-        <div class="gauge-row" style="margin-top:6px">
+        <div class="gauge-row" style="margin-top:8px">
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#00c8ff;display:inline-block;border-radius:2px"></span>Today</span>
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#4a5580;display:inline-block;border-radius:2px"></span>T-2</span>
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#2a3555;display:inline-block;border-radius:2px"></span>Last Wk</span>
         </div>
-        <div class="gauge-note" id="pt-gauge-note">fwd adj — p.a. · — days · 26 Jun 2026</div>
+        <table class="breakdown-table">
+          <thead><tr><th></th><th>Today</th><th>T-2</th><th>Last Wk</th></tr></thead>
+          <tbody>
+            <tr><td>GFEX settle</td><td id="pt-bd-gfex">—</td><td id="pt-bd-gfex-dod">—</td><td id="pt-bd-gfex-wow">—</td></tr>
+            <tr><td>Spot USD/oz</td><td id="pt-bd-spot">—</td><td id="pt-bd-spot-dod">—</td><td id="pt-bd-spot-wow">—</td></tr>
+            <tr><td>Fwd mid p.a.</td><td id="pt-bd-mid">—</td><td id="pt-bd-mid-dod">—</td><td id="pt-bd-mid-wow">—</td></tr>
+            <tr><td>Fwd px USD/oz</td><td id="pt-bd-fwd">—</td><td id="pt-bd-fwd-dod">—</td><td id="pt-bd-fwd-wow">—</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -367,12 +375,20 @@ async function handleSubmit(e) {
         <div class="gauge-row"><span>GFEX settle</span><span id="pd-settle-val">—</span></div>
         <div class="gauge-row"><span>Loco London fwd</span><span id="pd-fwd-val">—</span></div>
         <div class="gauge-row"><span>USD/CNY</span><span id="pd-cny-val">—</span></div>
-        <div class="gauge-row" style="margin-top:6px">
+        <div class="gauge-row" style="margin-top:8px">
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#ff8c00;display:inline-block;border-radius:2px"></span>Today</span>
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#4a5580;display:inline-block;border-radius:2px"></span>T-2</span>
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#2a3555;display:inline-block;border-radius:2px"></span>Last Wk</span>
         </div>
-        <div class="gauge-note" id="pd-gauge-note">fwd adj — p.a. · — days · 26 Jun 2026</div>
+        <table class="breakdown-table">
+          <thead><tr><th></th><th>Today</th><th>T-2</th><th>Last Wk</th></tr></thead>
+          <tbody>
+            <tr><td>GFEX settle</td><td id="pd-bd-gfex">—</td><td id="pd-bd-gfex-dod">—</td><td id="pd-bd-gfex-wow">—</td></tr>
+            <tr><td>Spot USD/oz</td><td id="pd-bd-spot">—</td><td id="pd-bd-spot-dod">—</td><td id="pd-bd-spot-wow">—</td></tr>
+            <tr><td>Fwd mid p.a.</td><td id="pd-bd-mid">—</td><td id="pd-bd-mid-dod">—</td><td id="pd-bd-mid-wow">—</td></tr>
+            <tr><td>Fwd px USD/oz</td><td id="pd-bd-fwd">—</td><td id="pd-bd-fwd-dod">—</td><td id="pd-bd-fwd-wow">—</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -790,6 +806,7 @@ const wickPlugin = {
   afterDatasetDraw(chart) {
     const ds=chart.data.datasets[0];
     if(!ds||!ds._ohlc) return;
+    if(!chart.scales||!chart.scales.y) return;
     const meta=chart.getDatasetMeta(0), ctx=chart.ctx;
     ctx.save();
     meta.data.forEach((bar,i)=>{
@@ -797,10 +814,12 @@ const wickPlugin = {
       ctx.strokeStyle=isUp?'#00ff88':'#ff2d78';
       ctx.lineWidth=1.5;
       const x=bar.x;
-      const yH=chart.scales.y.getPixelForValue(d.h);
-      const yL=chart.scales.y.getPixelForValue(d.l);
-      const yTop=chart.scales.y.getPixelForValue(Math.max(d.o,d.c));
-      const yBot=chart.scales.y.getPixelForValue(Math.min(d.o,d.c));
+      const scale = chart.scales.yPrice || chart.scales.y;
+      if(!scale) return;
+      const yH=scale.getPixelForValue(d.h);
+      const yL=scale.getPixelForValue(d.l);
+      const yTop=scale.getPixelForValue(Math.max(d.o,d.c));
+      const yBot=scale.getPixelForValue(Math.min(d.o,d.c));
       ctx.beginPath(); ctx.moveTo(x,yH); ctx.lineTo(x,yTop); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x,yBot); ctx.lineTo(x,yL); ctx.stroke();
     });
@@ -984,4 +1003,3 @@ async function handleSubmit(e) {
 </script>
 </body>
 </html>
-
