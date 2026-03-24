@@ -159,7 +159,8 @@ jobs:
           # ────────────────────────────────────────────────────────────────────
 
           def fetch_metals(date_str=None):
-              """Fetch PT and PD spot prices (USD/oz) and CNY/USD for a given date.
+              """Fetch LBMA AM fix for PT and PD (USD/oz) and CNY/USD for a given date.
+              Uses LBXPTAM (platinum AM fix) and LBXPDAM (palladium AM fix).
               date_str=None means latest. date_str='YYYY-MM-DD' fetches historical."""
               api_key = os.environ.get("METALS_API_KEY", "")
               if not api_key:
@@ -168,26 +169,31 @@ jobs:
 
               pt_spot, pd_spot, cny_usd = None, None, None
 
-              # Metals: XPT (platinum) and XPD (palladium)
+              # LBMA AM Fix: LBXPTAM (platinum), LBXPDAM (palladium)
+              # These are returned as USD per oz directly (not inverted like XPT/XPD)
               try:
                   if date_str:
-                      url = f"https://api.metalpriceapi.com/v1/{date_str}?api_key={api_key}&base=USD&currencies=XPT,XPD"
+                      url = f"https://api.metalpriceapi.com/v1/{date_str}?api_key={api_key}&base=USD&currencies=LBXPTAM,LBXPDAM"
                   else:
-                      url = f"https://api.metalpriceapi.com/v1/latest?api_key={api_key}&base=USD&currencies=XPT,XPD"
+                      url = f"https://api.metalpriceapi.com/v1/latest?api_key={api_key}&base=USD&currencies=LBXPTAM,LBXPDAM"
                   r = requests.get(url, timeout=20)
                   r.raise_for_status()
                   data = r.json()
                   if data.get("success"):
-                      xpt = data["rates"].get("XPT")
-                      xpd = data["rates"].get("XPD")
-                      if xpt: pt_spot = round(1.0 / float(xpt), 2)
-                      if xpd: pd_spot = round(1.0 / float(xpd), 2)
+                      # LBMA rates are returned as USDLBXPTAM = price in USD per oz directly
+                      rates = data["rates"]
+                      lbxptam = rates.get("LBXPTAM") or rates.get("USDLBXPTAM")
+                      lbxpdam = rates.get("LBXPDAM") or rates.get("USDLBXPDAM")
+                      # metalpriceapi returns LBMA as oz-per-USD (same as XPT), so invert
+                      if lbxptam: pt_spot = round(1.0 / float(lbxptam), 2) if float(lbxptam) < 1 else round(float(lbxptam), 2)
+                      if lbxpdam: pd_spot = round(1.0 / float(lbxpdam), 2) if float(lbxpdam) < 1 else round(float(lbxpdam), 2)
                       label = date_str or "latest"
-                      print(f"  [{label}] PT: {pt_spot} USD/oz | PD: {pd_spot} USD/oz")
+                      print(f"  [{label}] LBMA PT AM: {pt_spot} USD/oz | LBMA PD AM: {pd_spot} USD/oz")
+                      print(f"  [{label}] raw rates: LBXPTAM={lbxptam} LBXPDAM={lbxpdam}")
                   else:
-                      print(f"  metalpriceapi error ({date_str}): {data.get('message')}")
+                      print(f"  metalpriceapi LBMA error ({date_str}): {data.get('message')} | {data}")
               except Exception as e:
-                  print(f"  metalpriceapi failed ({date_str}): {e}")
+                  print(f"  metalpriceapi LBMA failed ({date_str}): {e}")
 
               # CNY/USD via Frankfurter
               try:
@@ -217,9 +223,10 @@ jobs:
                       r.raise_for_status()
                       data = r.json()
                       if data.get("success"):
-                          xpt = data["rates"].get("XPT")
-                          if xpt:
-                              pt_spot = round(1.0 / float(xpt), 2)
+                          lbxptam = data["rates"].get("LBXPTAM") or data["rates"].get("USDLBXPTAM")
+                          if lbxptam:
+                              v = float(lbxptam)
+                              pt_spot = round(1.0 / v, 2) if v < 1 else round(v, 2)
                               # FX rate
                               fx = requests.get(
                                   f"https://api.frankfurter.dev/v1/{date_str}?base=CNY&symbols=USD",
@@ -231,9 +238,22 @@ jobs:
               print(f"  Historical spot: fetched {len(result)} of {len(dates)} dates")
               return result
 
-          def calc_premium(gfex_settle_cny_g, spot_usd_oz, cny_usd, fwd_adj):
+          def add_business_days(d, n):
+              """Add n business days to date d (Mon-Fri only, no holiday calendar)."""
+              from datetime import timedelta
+              count = 0
+              while count < n:
+                  d += timedelta(days=1)
+                  if d.weekday() < 5:  # Mon=0 .. Fri=4
+                      count += 1
+              return d
+
+          def calc_premium(gfex_settle_cny_g, spot_usd_oz, cny_usd, fwd_adj, trade_date_str=None):
               """Convert GFEX settle to USD/oz ex-VAT and compare to
-              loco London spot forward-adjusted to FWD_DATE using fwd_adj p.a. (360-day)."""
+              loco London spot forward-adjusted to FWD_DATE.
+              trade_date_str: the date the spot price was observed (YYYY-MM-DD).
+              Spot value date = trade_date + 2 business days.
+              fwd_days = value_date to FWD_DATE (360-day convention)."""
               from datetime import date as date_cls
               if not all([gfex_settle_cny_g, spot_usd_oz, cny_usd]):
                   return None, None, None, None
@@ -241,11 +261,15 @@ jobs:
               # Step 1: Convert GFEX settle CNY/g -> USD/oz ex-VAT
               gfex_usd_oz = round(gfex_settle_cny_g * cny_usd * TROY_OZ / VAT_FACTOR, 2)
 
-              # Step 2: Forward-adjust loco London spot to FWD_DATE
+              # Step 2: Calculate forward days from spot value date to delivery
               fwd_date_parts = [int(x) for x in FWD_DATE.split("-")]
               forward_date   = date_cls(*fwd_date_parts)
-              today          = date_cls.today()
-              days_to_expiry = (forward_date - today).days
+              if trade_date_str:
+                  trade_date = date_cls.fromisoformat(trade_date_str)
+              else:
+                  trade_date = date_cls.today()
+              value_date     = add_business_days(trade_date, 2)
+              days_to_expiry = (forward_date - value_date).days
               fwd_factor     = 1 + (fwd_adj * days_to_expiry / 360)
               fwd_usd_oz     = round(spot_usd_oz * fwd_factor, 2)
 
@@ -253,8 +277,7 @@ jobs:
               premium_usd = round(gfex_usd_oz - fwd_usd_oz, 2)
               premium_pct = round((gfex_usd_oz - fwd_usd_oz) / fwd_usd_oz * 100, 2)
 
-              print(f"  Days to {FWD_DATE}: {days_to_expiry} | fwd adj: {fwd_adj*100:.1f}% p.a. | factor: {fwd_factor:.6f}")
-              print(f"  Spot: {spot_usd_oz} | Fwd: {fwd_usd_oz} | GFEX ex-VAT: {gfex_usd_oz} | Premium: {premium_usd} ({premium_pct}%)")
+              print(f"  [{trade_date_str or 'today'}] value date: {value_date} | days to {FWD_DATE}: {days_to_expiry} | fwd adj: {fwd_adj*100:.1f}% | fwd px: {fwd_usd_oz} | GFEX ex-VAT: {gfex_usd_oz} | prem: {premium_usd} ({premium_pct}%)")
 
               return premium_usd, premium_pct, fwd_usd_oz, days_to_expiry
 
@@ -342,20 +365,20 @@ jobs:
               gfex_settle_pd_wow = get_settle(pd_data, date_wow)
 
               # Today premiums — today GFEX settle + today spot + today CNY/USD
-              pt_prem_usd, pt_prem_pct, pt_fwd_usd_oz, days_to_expiry = calc_premium(gfex_settle_pt, pt_spot_usd_oz, cny_usd, PT_FWD_ADJ) if all([gfex_settle_pt, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
+              pt_prem_usd, pt_prem_pct, pt_fwd_usd_oz, days_to_expiry = calc_premium(gfex_settle_pt, pt_spot_usd_oz, cny_usd, PT_FWD_ADJ, date_today) if all([gfex_settle_pt, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
 
               # Palladium spot already fetched via fetch_metals above
               pd_spot_usd_oz = pd_spot_usd_oz_today
 
-              pd_prem_usd, pd_prem_pct, pd_fwd_usd_oz, _ = calc_premium(gfex_settle_pd, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ) if all([gfex_settle_pd, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
+              pd_prem_usd, pd_prem_pct, pd_fwd_usd_oz, _ = calc_premium(gfex_settle_pd, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ, date_today) if all([gfex_settle_pd, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
 
               # DoD premiums — yesterday GFEX settle + yesterday spot + yesterday CNY/USD
-              pt_prem_usd_dod, pt_prem_pct_dod, pt_fwd_dod, _ = calc_premium(gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod, PT_FWD_ADJ) if all([gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod]) else (None, None, None, None)
-              pd_prem_usd_dod, pd_prem_pct_dod, pd_fwd_dod, _ = calc_premium(gfex_settle_pd_dod, pd_spot_dod, cny_usd_dod, PD_FWD_ADJ) if all([gfex_settle_pd_dod, pd_spot_dod, cny_usd_dod]) else (None, None, None, None)
+              pt_prem_usd_dod, pt_prem_pct_dod, pt_fwd_dod, _ = calc_premium(gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod, PT_FWD_ADJ, date_dod) if all([gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod]) else (None, None, None, None)
+              pd_prem_usd_dod, pd_prem_pct_dod, pd_fwd_dod, _ = calc_premium(gfex_settle_pd_dod, pd_spot_dod, cny_usd_dod, PD_FWD_ADJ, date_dod) if all([gfex_settle_pd_dod, pd_spot_dod, cny_usd_dod]) else (None, None, None, None)
 
               # WoW premiums — last week GFEX settle + last week spot + last week CNY/USD
-              pt_prem_usd_wow, pt_prem_pct_wow, pt_fwd_wow, _ = calc_premium(gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow, PT_FWD_ADJ) if all([gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow]) else (None, None, None, None)
-              pd_prem_usd_wow, pd_prem_pct_wow, pd_fwd_wow, _ = calc_premium(gfex_settle_pd_wow, pd_spot_wow, cny_usd_wow, PD_FWD_ADJ) if all([gfex_settle_pd_wow, pd_spot_wow, cny_usd_wow]) else (None, None, None, None)
+              pt_prem_usd_wow, pt_prem_pct_wow, pt_fwd_wow, _ = calc_premium(gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow, PT_FWD_ADJ, date_wow) if all([gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow]) else (None, None, None, None)
+              pd_prem_usd_wow, pd_prem_pct_wow, pd_fwd_wow, _ = calc_premium(gfex_settle_pd_wow, pd_spot_wow, cny_usd_wow, PD_FWD_ADJ, date_wow) if all([gfex_settle_pd_wow, pd_spot_wow, cny_usd_wow]) else (None, None, None, None)
               print(f"  Today: PT={pt_prem_pct}% PD={pd_prem_pct}% | DoD: PT={pt_prem_pct_dod}% PD={pd_prem_pct_dod}% | WoW: PT={pt_prem_pct_wow}% PD={pd_prem_pct_wow}%")
 
               usd_cny = round(1.0 / cny_usd, 4) if cny_usd else None
@@ -391,6 +414,8 @@ jobs:
                   "pt_fwd_adjustment":     PT_FWD_ADJ * 100,
                   "pd_fwd_adjustment":     PD_FWD_ADJ * 100,
                   "fwd_days":              days_to_expiry,
+                  "pt_fwd_days_dod":        (lambda: calc_premium(gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod, PT_FWD_ADJ, date_dod)[3] if all([gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod]) else None)(),
+                  "pt_fwd_days_wow":        (lambda: calc_premium(gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow, PT_FWD_ADJ, date_wow)[3] if all([gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow]) else None)(),
                   "pt_spot_usd_oz":        pt_spot_usd_oz,
                   "pt_spot_dod":           pt_spot_dod,
                   "pt_spot_wow":           pt_spot_wow,
