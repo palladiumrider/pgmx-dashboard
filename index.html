@@ -378,7 +378,17 @@ async function handleSubmit(e) {
 
   </div>
 
+  <div class="section-title" id="oi-title">Platinum — Open Interest by Contract</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Contract</th><th>Type</th><th>Open Interest (lots)</th><th>OI Chg DoD</th><th>OI Chg WoW</th></tr></thead>
+      <tbody id="oi-table"></tbody>
+    </table>
+  </div>
 
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Settle vs 20D Avg</div>
       <div class="stat-value" id="s-settle-vs-avg">—</div>
       <div class="stat-change neu" id="s-settle-vs-avg-sub">loading…</div>
     </div>
@@ -403,18 +413,6 @@ async function handleSubmit(e) {
       <div class="stat-change neu" id="s-dod-sub">loading…</div>
     </div>
   </div>
-
-  <div class="section-title" id="oi-title">Platinum — Open Interest by Contract</div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Contract</th><th>Type</th><th>Open Interest (lots)</th><th>OI Chg DoD</th><th>OI Chg WoW</th></tr></thead>
-      <tbody id="oi-table"></tbody>
-    </table>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">Settle vs 20D Avg</div>
-
 
   <div class="section-title">Market Charts</div>
   <div class="tab-row">
@@ -955,4 +953,3 @@ async function handleSubmit(e) {
 </script>
 </body>
 </html>
-
