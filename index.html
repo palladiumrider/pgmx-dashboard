@@ -620,124 +620,107 @@ function populateStats(data, commodity='platinum') {
 
   document.getElementById('generated-ts').textContent=data.generated;
 
-  // ── GAUGE BANNER ────────────────────────────────────────────────────────────
-  const gaugeMode = { pt: 'pct', pd: 'pct' };
+  // gauge functions moved to global scope below
+}
 
-  function arcDash(r, pct, maxPct) {
-    // Returns "arcLen gap" for a circle of radius r, clipped to ±maxPct range
-    const circ    = 2 * Math.PI * r;
-    const maxDeg  = r === 56 ? 263 : r === 44 ? 207 : 151;
-    const clipped = Math.max(-maxPct, Math.min(maxPct, pct));
-    const frac    = (clipped + maxPct) / (maxPct * 2);
-    const arcLen  = frac * (circ * maxDeg / 360);
-    return arcLen + ' ' + (circ - arcLen);
+// ── GAUGE FUNCTIONS (global scope) ───────────────────────────────────────────
+const gaugeMode = { pt: 'pct', pd: 'pct' };
+
+function arcDash(r, pct, maxPct) {
+  const circ    = 2 * Math.PI * r;
+  const maxDeg  = r === 56 ? 263 : r === 44 ? 207 : 151;
+  const clipped = Math.max(-maxPct, Math.min(maxPct, pct));
+  const frac    = (clipped + maxPct) / (maxPct * 2);
+  const arcLen  = frac * (circ * maxDeg / 360);
+  return arcLen + ' ' + (circ - arcLen);
+}
+
+function arcColor(pct) {
+  if (pct == null) return '#1a2035';
+  return pct > 0 ? '#00ff88' : pct < 0 ? '#ff2d78' : '#4a5580';
+}
+
+function setArc(id, r, pct) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('stroke-dasharray', pct != null ? arcDash(r, pct, 15) : '0 999');
+  el.setAttribute('stroke', arcColor(pct));
+}
+
+function fillGauge(metal, d) {
+  const pct     = d[metal+'_premium_pct'];
+  const pctDod  = d[metal+'_premium_pct_dod'];
+  const pctWow  = d[metal+'_premium_pct_wow'];
+  const usd     = d[metal+'_premium_usd_oz'];
+  const usdDod  = d[metal+'_premium_usd_oz_dod'];
+  const usdWow  = d[metal+'_premium_usd_oz_wow'];
+  const settle  = d[metal+'_gfex_settle_cny_g'];
+  const fwd     = d[metal+'_fwd_usd_oz'];
+  const fwdAdj  = d[metal+'_fwd_adjustment'];
+  const usdCny  = d.usd_cny_rate;
+
+  // Draw three concentric arcs
+  setArc(metal+'-arc',     32, pct);
+  setArc(metal+'-arc-dod', 44, pctDod);
+  setArc(metal+'-arc-wow', 56, pctWow);
+
+  // Centre text
+  const isUp  = pct > 0, isDown = pct < 0;
+  const sign  = isUp ? '+' : '';
+  const cls   = isUp ? 'up' : isDown ? 'down' : 'neu';
+  const word  = isUp ? 'PREMIUM' : isDown ? 'DISCOUNT' : 'FLAT';
+  const pctEl = document.getElementById(metal+'-gauge-pct');
+  const lblEl = document.getElementById(metal+'-gauge-label');
+  if (pctEl) pctEl.textContent = pct != null ? sign+pct.toFixed(2)+'%' : '—';
+  if (lblEl) lblEl.textContent = 'TODAY %';
+
+  // Big number and word
+  const premEl = document.getElementById(metal+'-prem-usd');
+  if (premEl) { premEl.textContent = usd != null ? sign+'$'+Math.abs(usd).toFixed(2) : '—'; premEl.className = 'gauge-prem '+cls; }
+  const wordEl = document.getElementById(metal+'-prem-word');
+  if (wordEl) { wordEl.textContent = word+' vs Loco London Fwd'; wordEl.className = 'gauge-word '+cls; }
+
+  // Data rows
+  if (settle) document.getElementById(metal+'-settle-val').textContent = settle.toFixed(2)+' CNY/g';
+  if (fwd)    document.getElementById(metal+'-fwd-val').textContent    = '$'+fwd.toFixed(2);
+  if (usdCny) document.getElementById(metal+'-cny-val').textContent    = usdCny.toFixed(4);
+  const midEl = document.getElementById(metal+'-mid-note');
+  if (midEl && fwdAdj != null) midEl.textContent = (fwdAdj > 0 ? '+' : '')+fwdAdj.toFixed(1)+'% p.a.';
+
+  // Store all values for toggle
+  const svg = document.getElementById(metal+'-gauge-svg');
+  if (svg) {
+    svg.dataset.pct    = pct    ?? '';
+    svg.dataset.pctDod = pctDod ?? '';
+    svg.dataset.pctWow = pctWow ?? '';
+    svg.dataset.usd    = usd    ?? '';
+    svg.dataset.usdDod = usdDod ?? '';
+    svg.dataset.usdWow = usdWow ?? '';
   }
+}
 
-  function arcColor(pct, baseColor) {
-    if (pct == null) return '#1a2035';
-    return pct > 0 ? '#00ff88' : pct < 0 ? '#ff2d78' : '#4a5580';
-  }
+function toggleGaugeMode(metal) {
+  const modes = ['pct', 'usd-today', 'usd-dod', 'usd-wow'];
+  const cur   = gaugeMode[metal] || 'pct';
+  gaugeMode[metal] = modes[(modes.indexOf(cur) + 1) % modes.length];
+  const next  = gaugeMode[metal];
 
-  function setArc(id, r, pct, baseColor) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.setAttribute('stroke-dasharray', pct != null ? arcDash(r, pct, 15) : '0 999');
-    el.setAttribute('stroke', arcColor(pct, baseColor));
-  }
+  const svg   = document.getElementById(metal+'-gauge-svg');
+  const pctEl = document.getElementById(metal+'-gauge-pct');
+  const lblEl = document.getElementById(metal+'-gauge-label');
 
-  function fillGauge(metal, d) {
-    const pct     = d[metal+'_premium_pct'];
-    const pctDod  = d[metal+'_premium_pct_dod'];
-    const pctWow  = d[metal+'_premium_pct_wow'];
-    const usd     = d[metal+'_premium_usd_oz'];
-    const usdDod  = d[metal+'_premium_usd_oz_dod'];
-    const usdWow  = d[metal+'_premium_usd_oz_wow'];
-    const settle  = d[metal+'_gfex_settle_cny_g'];
-    const fwd     = d[metal+'_fwd_usd_oz'];
-    const fwdAdj  = d[metal+'_fwd_adjustment'];
-    const usdCny  = d.usd_cny_rate;
-    const fwdDays = d.fwd_days;
-    const baseCol = metal === 'pt' ? '#00c8ff' : '#ff8c00';
+  const pct    = parseFloat(svg.dataset.pct)    || null;
+  const usd    = parseFloat(svg.dataset.usd)    || null;
+  const usdDod = parseFloat(svg.dataset.usdDod) || null;
+  const usdWow = parseFloat(svg.dataset.usdWow) || null;
 
-    // Draw three concentric arcs
-    setArc(metal+'-arc',     32, pct,    baseCol);
-    setArc(metal+'-arc-dod', 44, pctDod, '#4a5580');
-    setArc(metal+'-arc-wow', 56, pctWow, '#4a5580');
+  const fmtUsd = v => v != null ? (v>0?'+':'')+'$'+Math.abs(v).toFixed(0) : '—';
+  const fmtPct = v => v != null ? (v>0?'+':'')+v.toFixed(2)+'%' : '—';
 
-    // Centre text — today value
-    const isUp   = pct > 0, isDown = pct < 0;
-    const sign   = isUp ? '+' : '';
-    const cls    = isUp ? 'up' : isDown ? 'down' : 'neu';
-    const word   = isUp ? 'PREMIUM' : isDown ? 'DISCOUNT' : 'FLAT';
-    const pctEl  = document.getElementById(metal+'-gauge-pct');
-    if (pctEl) pctEl.textContent = pct != null ? sign+pct.toFixed(2)+'%' : '—';
-
-    // Big number below gauge
-    const premEl = document.getElementById(metal+'-prem-usd');
-    if (premEl) {
-      premEl.textContent = usd != null ? sign+'$'+Math.abs(usd).toFixed(2) : '—';
-      premEl.className = 'gauge-prem '+cls;
-    }
-    const wordEl = document.getElementById(metal+'-prem-word');
-    if (wordEl) { wordEl.textContent = word+' vs Loco London Fwd'; wordEl.className = 'gauge-word '+cls; }
-
-    // Data rows
-    if (settle) document.getElementById(metal+'-settle-val').textContent = settle.toFixed(2)+' CNY/g';
-    if (fwd)    document.getElementById(metal+'-fwd-val').textContent    = '$'+fwd.toFixed(2);
-    if (usdCny) document.getElementById(metal+'-cny-val').textContent    = usdCny.toFixed(4);
-    const midEl = document.getElementById(metal+'-mid-note');
-    if (midEl && fwdAdj != null)
-      midEl.textContent = (fwdAdj > 0 ? '+' : '')+fwdAdj.toFixed(1)+'% p.a.';
-
-    // Store data for toggle
-    document.getElementById(metal+'-gauge-svg').dataset.pct    = pct ?? '';
-    document.getElementById(metal+'-gauge-svg').dataset.pctDod = pctDod ?? '';
-    document.getElementById(metal+'-gauge-svg').dataset.pctWow = pctWow ?? '';
-    document.getElementById(metal+'-gauge-svg').dataset.usd    = usd ?? '';
-    document.getElementById(metal+'-gauge-svg').dataset.usdDod = usdDod ?? '';
-    document.getElementById(metal+'-gauge-svg').dataset.usdWow = usdWow ?? '';
-  }
-
-  function toggleGaugeMode(metal) {
-    const modes = ['pct', 'usd-today', 'usd-dod', 'usd-wow'];
-    const cur   = gaugeMode[metal] || 'pct';
-    const next  = modes[(modes.indexOf(cur) + 1) % modes.length];
-    gaugeMode[metal] = next;
-
-    const svg   = document.getElementById(metal+'-gauge-svg');
-    const pctEl = document.getElementById(metal+'-gauge-pct');
-    const lblEl = document.getElementById(metal+'-gauge-label');
-
-    const pct    = parseFloat(svg.dataset.pct)    || null;
-    const pctDod = parseFloat(svg.dataset.pctDod) || null;
-    const pctWow = parseFloat(svg.dataset.pctWow) || null;
-    const usd    = parseFloat(svg.dataset.usd)    || null;
-    const usdDod = parseFloat(svg.dataset.usdDod) || null;
-    const usdWow = parseFloat(svg.dataset.usdWow) || null;
-
-    const fmtUsd = v => v != null ? (v>0?'+':'')+'$'+Math.abs(v).toFixed(0) : '—';
-    const fmtPct = v => v != null ? (v>0?'+':'')+v.toFixed(2)+'%' : '—';
-
-    if (next === 'pct') {
-      if (pctEl) pctEl.textContent = fmtPct(pct);
-      if (lblEl) lblEl.textContent = 'TODAY %';
-    } else if (next === 'usd-today') {
-      if (pctEl) pctEl.textContent = fmtUsd(usd);
-      if (lblEl) lblEl.textContent = 'TODAY $';
-    } else if (next === 'usd-dod') {
-      if (pctEl) pctEl.textContent = fmtUsd(usdDod);
-      if (lblEl) lblEl.textContent = 'YEST $';
-    } else {
-      if (pctEl) pctEl.textContent = fmtUsd(usdWow);
-      if (lblEl) lblEl.textContent = 'LST WK $';
-    }
-  }
-
-  if (pgmxData) {
-    fillGauge('pt', pgmxData);
-    fillGauge('pd', pgmxData);
-  }
-
+  if (next === 'pct')       { if (pctEl) pctEl.textContent = fmtPct(pct);    if (lblEl) lblEl.textContent = 'TODAY %';  }
+  else if (next === 'usd-today') { if (pctEl) pctEl.textContent = fmtUsd(usd);    if (lblEl) lblEl.textContent = 'TODAY $';  }
+  else if (next === 'usd-dod')   { if (pctEl) pctEl.textContent = fmtUsd(usdDod); if (lblEl) lblEl.textContent = 'YEST $';   }
+  else                           { if (pctEl) pctEl.textContent = fmtUsd(usdWow); if (lblEl) lblEl.textContent = 'LST WK $'; }
 }
 
 // ── OI TABLE ─────────────────────────────────────────────────────────────────
