@@ -699,23 +699,37 @@ function populateStats(data, commodity='platinum') {
   }
 
   function toggleGaugeMode(metal) {
-    gaugeMode[metal] = gaugeMode[metal] === 'pct' ? 'usd' : 'pct';
-    const svg  = document.getElementById(metal+'-gauge-svg');
-    const mode = gaugeMode[metal];
-    const isPct = mode === 'pct';
+    const modes = ['pct', 'usd-today', 'usd-dod', 'usd-wow'];
+    const cur   = gaugeMode[metal] || 'pct';
+    const next  = modes[(modes.indexOf(cur) + 1) % modes.length];
+    gaugeMode[metal] = next;
+
+    const svg   = document.getElementById(metal+'-gauge-svg');
     const pctEl = document.getElementById(metal+'-gauge-pct');
     const lblEl = document.getElementById(metal+'-gauge-label');
 
-    if (isPct) {
-      const pct = svg.dataset.pct;
-      const sign = pct > 0 ? '+' : '';
-      if (pctEl) pctEl.textContent = pct !== '' ? sign+parseFloat(pct).toFixed(2)+'%' : '—';
-      if (lblEl) lblEl.textContent = 'TODAY';
+    const pct    = parseFloat(svg.dataset.pct)    || null;
+    const pctDod = parseFloat(svg.dataset.pctDod) || null;
+    const pctWow = parseFloat(svg.dataset.pctWow) || null;
+    const usd    = parseFloat(svg.dataset.usd)    || null;
+    const usdDod = parseFloat(svg.dataset.usdDod) || null;
+    const usdWow = parseFloat(svg.dataset.usdWow) || null;
+
+    const fmtUsd = v => v != null ? (v>0?'+':'')+'$'+Math.abs(v).toFixed(0) : '—';
+    const fmtPct = v => v != null ? (v>0?'+':'')+v.toFixed(2)+'%' : '—';
+
+    if (next === 'pct') {
+      if (pctEl) pctEl.textContent = fmtPct(pct);
+      if (lblEl) lblEl.textContent = 'TODAY %';
+    } else if (next === 'usd-today') {
+      if (pctEl) pctEl.textContent = fmtUsd(usd);
+      if (lblEl) lblEl.textContent = 'TODAY $';
+    } else if (next === 'usd-dod') {
+      if (pctEl) pctEl.textContent = fmtUsd(usdDod);
+      if (lblEl) lblEl.textContent = 'YEST $';
     } else {
-      const usd = svg.dataset.usd;
-      const sign = usd > 0 ? '+' : '';
-      if (pctEl) pctEl.textContent = usd !== '' ? sign+'$'+Math.abs(parseFloat(usd)).toFixed(0) : '—';
-      if (lblEl) lblEl.textContent = 'USD/OZ';
+      if (pctEl) pctEl.textContent = fmtUsd(usdWow);
+      if (lblEl) lblEl.textContent = 'LST WK $';
     }
   }
 
