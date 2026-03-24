@@ -256,6 +256,24 @@ async function handleSubmit(e) {
     color:var(--muted); opacity:0.6; margin-top:8px; letter-spacing:0.1em;
   }
 
+
+  .breakdown-table {
+    width:100%; border-collapse:collapse; margin-top:10px;
+    font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.06em;
+  }
+  .breakdown-table th {
+    color:var(--muted); font-weight:400; text-align:right;
+    padding:2px 6px; border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  .breakdown-table th:first-child { text-align:left; }
+  .breakdown-table td {
+    text-align:right; padding:2px 6px; color:var(--text);
+    white-space:nowrap;
+  }
+  .breakdown-table td:first-child { text-align:left; color:var(--muted); }
+  .breakdown-table tr:last-child td { color:var(--neon-blue); }
+
 </style>
 </head>
 <body>
@@ -310,7 +328,7 @@ async function handleSubmit(e) {
         <div class="gauge-row"><span>USD/CNY</span><span id="pt-cny-val">—</span></div>
         <div class="gauge-row" style="margin-top:6px">
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#00c8ff;display:inline-block;border-radius:2px"></span>Today</span>
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#4a5580;display:inline-block;border-radius:2px"></span>Yest</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#4a5580;display:inline-block;border-radius:2px"></span>T-2</span>
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#2a3555;display:inline-block;border-radius:2px"></span>Last Wk</span>
         </div>
         <div class="gauge-note" id="pt-gauge-note">fwd adj — p.a. · — days · 26 Jun 2026</div>
@@ -351,7 +369,7 @@ async function handleSubmit(e) {
         <div class="gauge-row"><span>USD/CNY</span><span id="pd-cny-val">—</span></div>
         <div class="gauge-row" style="margin-top:6px">
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#ff8c00;display:inline-block;border-radius:2px"></span>Today</span>
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#4a5580;display:inline-block;border-radius:2px"></span>Yest</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#4a5580;display:inline-block;border-radius:2px"></span>T-2</span>
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#2a3555;display:inline-block;border-radius:2px"></span>Last Wk</span>
         </div>
         <div class="gauge-note" id="pd-gauge-note">fwd adj — p.a. · — days · 26 Jun 2026</div>
@@ -360,9 +378,7 @@ async function handleSubmit(e) {
 
   </div>
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">Settle vs 20D Avg</div>
+
       <div class="stat-value" id="s-settle-vs-avg">—</div>
       <div class="stat-change neu" id="s-settle-vs-avg-sub">loading…</div>
     </div>
@@ -395,6 +411,10 @@ async function handleSubmit(e) {
       <tbody id="oi-table"></tbody>
     </table>
   </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Settle vs 20D Avg</div>
+
 
   <div class="section-title">Market Charts</div>
   <div class="tab-row">
@@ -684,8 +704,31 @@ function fillGauge(metal, d) {
   if (settle) document.getElementById(metal+'-settle-val').textContent = settle.toFixed(2)+' CNY/g';
   if (fwd)    document.getElementById(metal+'-fwd-val').textContent    = '$'+fwd.toFixed(2);
   if (usdCny) document.getElementById(metal+'-cny-val').textContent    = usdCny.toFixed(4);
-  const midEl = document.getElementById(metal+'-mid-note');
-  if (midEl && fwdAdj != null) midEl.textContent = (fwdAdj > 0 ? '+' : '')+fwdAdj.toFixed(1)+'% p.a.';
+  // Breakdown table
+  const fmtG = v => v != null ? v.toFixed(2)+' CNY/g' : '—';
+  const fmtS = v => v != null ? '$'+v.toFixed(1) : '—';
+  const fmtM = v => v != null ? (v>0?'+':'')+v.toFixed(1)+'%' : '—';
+
+  const spotDod = d[metal+'_spot_dod'];
+  const spotWow = d[metal+'_spot_wow'];
+  const fwdDod  = d[metal+'_fwd_dod'];
+  const fwdWow  = d[metal+'_fwd_wow'];
+  const gfexDod = d[metal+'_gfex_settle_dod'];
+  const gfexWow = d[metal+'_gfex_settle_wow'];
+
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  set(metal+'-bd-gfex',     fmtG(settle));
+  set(metal+'-bd-gfex-dod', fmtG(gfexDod));
+  set(metal+'-bd-gfex-wow', fmtG(gfexWow));
+  set(metal+'-bd-spot',     fmtS(d[metal+'_spot_usd_oz']));
+  set(metal+'-bd-spot-dod', fmtS(spotDod));
+  set(metal+'-bd-spot-wow', fmtS(spotWow));
+  set(metal+'-bd-mid',      fmtM(fwdAdj));
+  set(metal+'-bd-mid-dod',  fmtM(fwdAdj));
+  set(metal+'-bd-mid-wow',  fmtM(fwdAdj));
+  set(metal+'-bd-fwd',      fmtS(fwd));
+  set(metal+'-bd-fwd-dod',  fmtS(fwdDod));
+  set(metal+'-bd-fwd-wow',  fmtS(fwdWow));
 
   // Store all values for toggle
   const svg = document.getElementById(metal+'-gauge-svg');
@@ -719,7 +762,7 @@ function toggleGaugeMode(metal) {
 
   if (next === 'pct')       { if (pctEl) pctEl.textContent = fmtPct(pct);    if (lblEl) lblEl.textContent = 'TODAY %';  }
   else if (next === 'usd-today') { if (pctEl) pctEl.textContent = fmtUsd(usd);    if (lblEl) lblEl.textContent = 'TODAY $';  }
-  else if (next === 'usd-dod')   { if (pctEl) pctEl.textContent = fmtUsd(usdDod); if (lblEl) lblEl.textContent = 'YEST $';   }
+  else if (next === 'usd-dod')   { if (pctEl) pctEl.textContent = fmtUsd(usdDod); if (lblEl) lblEl.textContent = 'T-2 $';   }
   else                           { if (pctEl) pctEl.textContent = fmtUsd(usdWow); if (lblEl) lblEl.textContent = 'LST WK $'; }
 }
 
@@ -912,4 +955,3 @@ async function handleSubmit(e) {
 </script>
 </body>
 </html>
-
