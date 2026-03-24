@@ -1,0 +1,215 @@
+name: Update GFEX PGM Data
+
+on:
+  schedule:
+    # 8am London time = 8am UTC (winter) / 7am UTC (summer, BST)
+    # Run at both 7am and 8am UTC to cover both GMT and BST
+    - cron: '0 7 * * 1-5'
+    - cron: '0 8 * * 1-5'
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Get today's date (London time)
+        id: date
+        run: |
+          echo "TODAY=$(TZ='Europe/London' date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Scrape today's GFEX data
+        run: |
+          cat << 'EOF' > scraper.py
+          """
+          GFEX Scraper — Platinum (pt) and Palladium (pd) daily futures data.
+          """
+          import sqlite3
+          import time
+          import requests
+          import warnings
+          warnings.filterwarnings("ignore")
+
+          DB_PATH = "gfex_platinum_palladium.db"
+          API_URL = "http://www.gfex.com.cn/u/interfacesWebTiDayQuotes/loadList"
+          HEADERS = {
+              "User-Agent": (
+                  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/120.0.0.0 Safari/537.36"
+              ),
+              "Referer": "http://www.gfex.com.cn/en/DailyStatisticsDD/Statistics.shtml",
+              "Content-Type": "application/x-www-form-urlencoded",
+          }
+          COMMODITY_MAP = {"pt": "Platinum", "pd": "Palladium"}
+
+          def init_db(db_path=DB_PATH):
+              conn = sqlite3.connect(db_path)
+              conn.execute("""
+                  CREATE TABLE IF NOT EXISTS prices (
+                      date TEXT, contract_code TEXT, commodity TEXT,
+                      open REAL, high REAL, low REAL, close REAL,
+                      settle REAL, volume INTEGER, oi INTEGER,
+                      PRIMARY KEY (date, contract_code)
+                  )
+              """)
+              conn.commit()
+              return conn
+
+          def fetch_date(date_str, session=None):
+              api_date = date_str.replace("-", "")
+              iso_date = f"{api_date[:4]}-{api_date[4:6]}-{api_date[6:]}"
+              payload = {"trade_date": api_date, "trade_type": "0"}
+              req = session or requests
+              resp = req.post(API_URL, data=payload, headers=HEADERS, timeout=20, verify=False)
+              resp.raise_for_status()
+              data = resp.json()
+              if data.get("code") != "0":
+                  raise ValueError(f"API error for {date_str}: {data.get('msg')}")
+              rows = []
+              for item in data.get("data", []):
+                  variety = item.get("varietyOrder", "")
+                  deliv = item.get("delivMonth", "")
+                  if variety not in COMMODITY_MAP or not deliv:
+                      continue
+                  def _float(val):
+                      try: return float(val) if val is not None else None
+                      except: return None
+                  def _int(val):
+                      try: return int(val) if val is not None else None
+                      except: return None
+                  rows.append({
+                      "date": iso_date, "contract_code": f"{variety}{deliv}",
+                      "commodity": COMMODITY_MAP[variety],
+                      "open": _float(item.get("open")), "high": _float(item.get("high")),
+                      "low": _float(item.get("low")), "close": _float(item.get("close")),
+                      "settle": _float(item.get("clearPrice")),
+                      "volume": _int(item.get("volumn")), "oi": _int(item.get("openInterest")),
+                  })
+              return rows
+
+          def insert_rows(conn, rows):
+              conn.cursor().executemany(
+                  """INSERT OR IGNORE INTO prices
+                     (date, contract_code, commodity, open, high, low, close, settle, volume, oi)
+                     VALUES (:date, :contract_code, :commodity, :open, :high, :low, :close,
+                             :settle, :volume, :oi)""", rows)
+              conn.commit()
+              return len(rows)
+
+          if __name__ == "__main__":
+              import sys
+              target = sys.argv[1] if len(sys.argv) > 1 else __import__('datetime').date.today().isoformat()
+              conn = init_db()
+              session = requests.Session()
+              print(f"Scraping {target}...")
+              try:
+                  rows = fetch_date(target, session=session)
+                  insert_rows(conn, rows)
+                  for c in ("Platinum", "Palladium"):
+                      n = sum(1 for r in rows if r["commodity"] == c)
+                      print(f"  {c}: {n} rows")
+              except Exception as e:
+                  print(f"  ERROR: {e}")
+              finally:
+                  conn.close()
+          EOF
+          python3 scraper.py ${{ steps.date.outputs.TODAY }}
+
+      - name: Export pgmx-data.json
+        run: |
+          cat << 'EOF' > export_json.py
+          """
+          Export OI table and candlestick chart data to data/pgmx-data.json
+          """
+          import json, sqlite3
+          from datetime import datetime
+          from pathlib import Path
+
+          DB_PATH     = "gfex_platinum_palladium.db"
+          OUTPUT_PATH = Path("data/pgmx-data.json")
+
+          def get_oi_table(conn, commodity, date_today, date_dod, date_wow):
+              def get_oi(d):
+                  cur = conn.execute("SELECT contract_code, oi FROM prices WHERE date=? AND oi IS NOT NULL", (d,))
+                  return {r[0]: r[1] for r in cur.fetchall()}
+              oi_today = get_oi(date_today)
+              oi_dod   = get_oi(date_dod)
+              oi_wow   = get_oi(date_wow)
+              cur = conn.execute(
+                  "SELECT contract_code FROM prices WHERE date=? AND commodity=? ORDER BY contract_code",
+                  (date_today, commodity))
+              contracts = [r[0] for r in cur.fetchall()]
+              rows = []
+              for c in contracts:
+                  oi_now = oi_today.get(c)
+                  def pct(now, prev):
+                      if prev and prev != 0: return round((now - prev) / prev * 100, 2)
+                      return None
+                  rows.append({"contract": c, "oi": oi_now,
+                      "dod_pct": pct(oi_now, oi_dod.get(c)) if oi_now is not None else None,
+                      "wow_pct": pct(oi_now, oi_wow.get(c)) if oi_now is not None else None})
+              return rows
+
+          def get_candlestick(conn, commodity):
+              cur = conn.execute(
+                  """SELECT contract_code FROM prices
+                     WHERE commodity=? AND date=(SELECT MAX(date) FROM prices WHERE commodity=?)
+                     ORDER BY volume DESC, contract_code ASC LIMIT 1""", (commodity, commodity))
+              row = cur.fetchone()
+              if not row: return None
+              contract = row[0]
+              cur2 = conn.execute(
+                  """SELECT date, open, high, low, close, settle, volume, oi FROM prices
+                     WHERE contract_code=?
+                       AND date >= date((SELECT MAX(date) FROM prices), '-180 days')
+                     ORDER BY date ASC""", (contract,))
+              data = [{"date":r[0],"open":r[1],"high":r[2],"low":r[3],"close":r[4],"settle":r[5],"volume":r[6],"oi":r[7]} for r in cur2.fetchall()]
+              return {"contract": contract, "data": data}
+
+          def main():
+              conn = sqlite3.connect(DB_PATH)
+              dates = [r[0] for r in conn.execute("SELECT DISTINCT date FROM prices ORDER BY date DESC LIMIT 10")]
+              if len(dates) < 2:
+                  conn.close(); raise RuntimeError("Not enough dates in database.")
+              date_today = dates[0]; date_dod = dates[1]
+              date_wow   = dates[5] if len(dates) >= 6 else dates[-1]
+              output = {"generated": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                        "date_today": date_today, "date_dod": date_dod, "date_wow": date_wow}
+              for commodity in ("Platinum", "Palladium"):
+                  key = commodity.lower()
+                  output[key] = {"candlestick": get_candlestick(conn, commodity),
+                                 "oi_table": get_oi_table(conn, commodity, date_today, date_dod, date_wow)}
+              conn.close()
+              OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+              with open(OUTPUT_PATH, "w") as f:
+                  json.dump(output, f, indent=2)
+              print(f"Saved → {OUTPUT_PATH}")
+              for commodity in ("Platinum", "Palladium"):
+                  cs = output[commodity.lower()]["candlestick"]
+                  oi = output[commodity.lower()]["oi_table"]
+                  print(f"  {commodity}: {len(cs['data']) if cs else 0} candles, {len(oi)} OI rows")
+
+          if __name__ == "__main__":
+              main()
+          EOF
+          python3 export_json.py
+
+      - name: Commit and push updated data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/pgmx-data.json
+          git diff --staged --quiet || git commit -m "data: update pgmx-data.json for ${{ steps.date.outputs.TODAY }}"
+          git push
