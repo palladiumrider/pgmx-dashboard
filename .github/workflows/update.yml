@@ -159,8 +159,8 @@ jobs:
           # ────────────────────────────────────────────────────────────────────
 
           def fetch_metals(date_str=None):
-              """Fetch LBMA AM fix for PT and PD (USD/oz) and CNY/USD for a given date.
-              Uses LBXPTAM (platinum AM fix) and LBXPDAM (palladium AM fix).
+              """Fetch PT and PD spot prices (USD/oz) and CNY/USD for a given date.
+              Uses XPT/XPD spot prices from metalpriceapi (LBMA AM not on this plan).
               date_str=None means latest. date_str='YYYY-MM-DD' fetches historical."""
               api_key = os.environ.get("METALS_API_KEY", "")
               if not api_key:
@@ -169,31 +169,25 @@ jobs:
 
               pt_spot, pd_spot, cny_usd = None, None, None
 
-              # LBMA AM Fix: LBXPTAM (platinum), LBXPDAM (palladium)
-              # These are returned as USD per oz directly (not inverted like XPT/XPD)
               try:
                   if date_str:
-                      url = f"https://api.metalpriceapi.com/v1/{date_str}?api_key={api_key}&base=USD&currencies=LBXPTAM,LBXPDAM"
+                      url = f"https://api.metalpriceapi.com/v1/{date_str}?api_key={api_key}&base=USD&currencies=XPT,XPD"
                   else:
-                      url = f"https://api.metalpriceapi.com/v1/latest?api_key={api_key}&base=USD&currencies=LBXPTAM,LBXPDAM"
+                      url = f"https://api.metalpriceapi.com/v1/latest?api_key={api_key}&base=USD&currencies=XPT,XPD"
                   r = requests.get(url, timeout=20)
                   r.raise_for_status()
                   data = r.json()
                   if data.get("success"):
-                      # LBMA rates are returned as USDLBXPTAM = price in USD per oz directly
-                      rates = data["rates"]
-                      lbxptam = rates.get("LBXPTAM") or rates.get("USDLBXPTAM")
-                      lbxpdam = rates.get("LBXPDAM") or rates.get("USDLBXPDAM")
-                      # metalpriceapi returns LBMA as oz-per-USD (same as XPT), so invert
-                      if lbxptam: pt_spot = round(1.0 / float(lbxptam), 2) if float(lbxptam) < 1 else round(float(lbxptam), 2)
-                      if lbxpdam: pd_spot = round(1.0 / float(lbxpdam), 2) if float(lbxpdam) < 1 else round(float(lbxpdam), 2)
+                      xpt = data["rates"].get("XPT")
+                      xpd = data["rates"].get("XPD")
+                      if xpt: pt_spot = round(1.0 / float(xpt), 2)
+                      if xpd: pd_spot = round(1.0 / float(xpd), 2)
                       label = date_str or "latest"
-                      print(f"  [{label}] LBMA PT AM: {pt_spot} USD/oz | LBMA PD AM: {pd_spot} USD/oz")
-                      print(f"  [{label}] raw rates: LBXPTAM={lbxptam} LBXPDAM={lbxpdam}")
+                      print(f"  [{label}] PT: {pt_spot} USD/oz | PD: {pd_spot} USD/oz")
                   else:
-                      print(f"  metalpriceapi LBMA error ({date_str}): {data.get('message')} | {data}")
+                      print(f"  metalpriceapi error ({date_str}): {data.get('message')} | {data}")
               except Exception as e:
-                  print(f"  metalpriceapi LBMA failed ({date_str}): {e}")
+                  print(f"  metalpriceapi failed ({date_str}): {e}")
 
               # CNY/USD via Frankfurter
               try:
@@ -223,10 +217,9 @@ jobs:
                       r.raise_for_status()
                       data = r.json()
                       if data.get("success"):
-                          lbxptam = data["rates"].get("LBXPTAM") or data["rates"].get("USDLBXPTAM")
-                          if lbxptam:
-                              v = float(lbxptam)
-                              pt_spot = round(1.0 / v, 2) if v < 1 else round(v, 2)
+                          xpt = data["rates"].get("XPT")
+                          if xpt:
+                              pt_spot = round(1.0 / float(xpt), 2)
                               # FX rate
                               fx = requests.get(
                                   f"https://api.frankfurter.dev/v1/{date_str}?base=CNY&symbols=USD",
