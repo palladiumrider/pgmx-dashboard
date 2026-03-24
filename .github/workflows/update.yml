@@ -1,4 +1,3 @@
-
 name: Update GFEX PGM Data
 
 on:
@@ -30,7 +29,7 @@ jobs:
         run: |
           echo "TODAY=$(TZ='Europe/London' date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: Scrape last 14 calendar days of GFEX data
+      - name: Scrape last 180 calendar days of GFEX data
         run: |
           cat << 'EOF' > scraper.py
           """
@@ -114,7 +113,7 @@ jobs:
               import sys
               from datetime import date, timedelta
               today = date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else date.today()
-              dates = [(today - timedelta(days=i)).isoformat() for i in range(14)]
+              dates = [(today - timedelta(days=i)).isoformat() for i in range(180)]
               conn = init_db()
               session = requests.Session()
               total = {"Platinum": 0, "Palladium": 0}
