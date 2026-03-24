@@ -317,13 +317,15 @@ jobs:
               dates = [r[0] for r in conn.execute("SELECT DISTINCT date FROM prices ORDER BY date DESC LIMIT 10")]
               if len(dates) < 2:
                   conn.close(); print("No data available yet — skipping export."); exit(0)
-              date_today = dates[0]; date_dod = dates[2]
-              date_wow   = dates[5] if len(dates) >= 6 else dates[-1]
+              date_today    = dates[0]
+              date_dod      = dates[1]   # true prev trading day — for OI DoD %
+              date_dod_spot = dates[2]   # T-2 — for spot price (API needs settled data)
+              date_wow      = dates[5] if len(dates) >= 6 else dates[-1]
 
-              # Fetch spot prices and FX rates for today, DoD, WoW
+              # Fetch spot prices — use T-2 (metalpriceapi T-1 not yet settled)
               print("Fetching spot prices...")
               pt_spot_usd_oz, pd_spot_usd_oz_today, cny_usd       = fetch_metals()
-              pt_spot_dod,    pd_spot_dod,    cny_usd_dod          = fetch_metals(date_dod)
+              pt_spot_dod,    pd_spot_dod,    cny_usd_dod          = fetch_metals(date_dod_spot)
               pt_spot_wow,    pd_spot_wow,    cny_usd_wow           = fetch_metals(date_wow)
               # Use today's CNY/USD as primary; fall back per period if needed
               cny_usd_dod = cny_usd_dod or cny_usd
@@ -351,10 +353,10 @@ jobs:
               pd_data = cs_pd["data"] if cs_pd else []
 
               gfex_settle_pt     = get_settle(pt_data, date_today)
-              gfex_settle_pt_dod = get_settle(pt_data, date_dod)
+              gfex_settle_pt_dod = get_settle(pt_data, date_dod_spot)
               gfex_settle_pt_wow = get_settle(pt_data, date_wow)
               gfex_settle_pd     = get_settle(pd_data, date_today)
-              gfex_settle_pd_dod = get_settle(pd_data, date_dod)
+              gfex_settle_pd_dod = get_settle(pd_data, date_dod_spot)
               gfex_settle_pd_wow = get_settle(pd_data, date_wow)
 
               # Today premiums — today GFEX settle + today spot + today CNY/USD
@@ -366,8 +368,8 @@ jobs:
               pd_prem_usd, pd_prem_pct, pd_fwd_usd_oz, _ = calc_premium(gfex_settle_pd, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ, date_today) if all([gfex_settle_pd, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
 
               # DoD premiums — yesterday GFEX settle + yesterday spot + yesterday CNY/USD
-              pt_prem_usd_dod, pt_prem_pct_dod, pt_fwd_dod, _ = calc_premium(gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod, PT_FWD_ADJ, date_dod) if all([gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod]) else (None, None, None, None)
-              pd_prem_usd_dod, pd_prem_pct_dod, pd_fwd_dod, _ = calc_premium(gfex_settle_pd_dod, pd_spot_dod, cny_usd_dod, PD_FWD_ADJ, date_dod) if all([gfex_settle_pd_dod, pd_spot_dod, cny_usd_dod]) else (None, None, None, None)
+              pt_prem_usd_dod, pt_prem_pct_dod, pt_fwd_dod, _ = calc_premium(gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod, PT_FWD_ADJ, date_dod_spot) if all([gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod]) else (None, None, None, None)
+              pd_prem_usd_dod, pd_prem_pct_dod, pd_fwd_dod, _ = calc_premium(gfex_settle_pd_dod, pd_spot_dod, cny_usd_dod, PD_FWD_ADJ, date_dod_spot) if all([gfex_settle_pd_dod, pd_spot_dod, cny_usd_dod]) else (None, None, None, None)
 
               # WoW premiums — last week GFEX settle + last week spot + last week CNY/USD
               pt_prem_usd_wow, pt_prem_pct_wow, pt_fwd_wow, _ = calc_premium(gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow, PT_FWD_ADJ, date_wow) if all([gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow]) else (None, None, None, None)
@@ -401,6 +403,7 @@ jobs:
                   "generated":             datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                   "date_today":            date_today,
                   "date_dod":              date_dod,
+                  "date_dod_spot":         date_dod_spot,
                   "date_wow":              date_wow,
                   "cny_usd_rate":          cny_usd,
                   "usd_cny_rate":          usd_cny,
