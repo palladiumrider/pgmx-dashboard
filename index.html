@@ -206,6 +206,47 @@ async function handleSubmit(e) {
     color:var(--muted); letter-spacing:0.1em; line-height:1.7;
   }
 
+
+  /* ── PREMIUM BANNER ── */
+  .premium-banner {
+    display:grid; grid-template-columns: 1fr auto 1fr;
+    align-items:center; gap:24px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:2px; padding:20px 28px; margin-bottom:36px;
+    position:relative; overflow:hidden;
+    opacity:0; transform:translateY(18px);
+    animation:fadeUp 0.55s ease forwards 0.1s;
+  }
+  .premium-banner::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,var(--neon-blue),var(--neon-purple),var(--neon-pink));
+  }
+  .prem-block { display:flex; flex-direction:column; gap:4px; }
+  .prem-block.center { align-items:center; text-align:center; }
+  .prem-block.right  { align-items:flex-end; text-align:right; }
+  .prem-label {
+    font-family:'DM Mono',monospace; font-size:0.62rem;
+    letter-spacing:0.18em; text-transform:uppercase; color:var(--muted);
+  }
+  .prem-value {
+    font-family:'Bebas Neue',sans-serif; font-size:1.8rem;
+    letter-spacing:0.04em; color:var(--text); line-height:1;
+  }
+  .prem-sub {
+    font-family:'DM Mono',monospace; font-size:0.65rem;
+    color:var(--muted); letter-spacing:0.08em;
+  }
+  .prem-divider {
+    width:1px; height:48px; background:var(--border);
+  }
+  .prem-result {
+    font-family:'Bebas Neue',sans-serif; font-size:2.4rem;
+    letter-spacing:0.04em; line-height:1;
+  }
+  .prem-result.premium { color:var(--neon-green); }
+  .prem-result.discount { color:var(--neon-pink); }
+  .prem-result.neutral  { color:var(--muted); }
+
 </style>
 </head>
 <body>
@@ -221,6 +262,30 @@ async function handleSubmit(e) {
       <div class="live-badge"><div class="live-dot"></div>LIVE</div>
     </div>
   </header>
+
+
+  <!-- ── PREMIUM / DISCOUNT BANNER ── -->
+  <div class="premium-banner" id="premiumBanner">
+    <div class="prem-block">
+      <div class="prem-label">GFEX PT Front Month Settle</div>
+      <div class="prem-value" id="prem-gfex-settle">—</div>
+      <div class="prem-sub" id="prem-gfex-sub">CNY/g · ex-VAT USD/oz: <span id="prem-gfex-usd">—</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="prem-divider"></div>
+      <div class="prem-block center">
+        <div class="prem-label">vs Loco London Spot</div>
+        <div class="prem-result neutral" id="prem-result">—</div>
+        <div class="prem-sub" id="prem-result-sub">loading market data…</div>
+      </div>
+      <div class="prem-divider"></div>
+    </div>
+    <div class="prem-block right">
+      <div class="prem-label">Platinum Spot · 7am London</div>
+      <div class="prem-value" id="prem-spot">—</div>
+      <div class="prem-sub" id="prem-spot-sub">USD/oz · CNY/USD: <span id="prem-cny">—</span></div>
+    </div>
+  </div>
 
   <div class="stats-grid">
     <div class="stat-card">
@@ -481,6 +546,38 @@ function populateStats(data, commodity='platinum') {
     ptDod);
 
   document.getElementById('generated-ts').textContent=data.generated;
+
+  // ── PREMIUM BANNER ──────────────────────────────────────────────────────────
+  const ptSettle   = data.pt_gfex_settle_cny_g;
+  const ptSpot     = data.pt_spot_usd_oz;
+  const cnyUsd     = data.cny_usd_rate;
+  const premUsd    = data.pt_premium_usd_oz;
+  const premPct    = data.pt_premium_pct;
+
+  if (ptSettle) {
+    document.getElementById('prem-gfex-settle').textContent = ptSettle.toFixed(2) + ' CNY/g';
+    const exVat = ptSettle && cnyUsd ? (ptSettle * 31.1035 * cnyUsd / 1.13).toFixed(2) : '—';
+    document.getElementById('prem-gfex-usd').textContent = exVat ? '$' + exVat : '—';
+  }
+  if (ptSpot) {
+    document.getElementById('prem-spot').textContent = '$' + ptSpot.toFixed(2);
+    document.getElementById('prem-spot-sub').textContent =
+      'USD/oz · CNY/USD: ' + (cnyUsd ? cnyUsd.toFixed(4) : '—');
+  }
+  if (premUsd != null && premPct != null) {
+    const isPrem   = premUsd > 0;
+    const isDisc   = premUsd < 0;
+    const sign     = isPrem ? '+' : '';
+    const cls      = isPrem ? 'premium' : isDisc ? 'discount' : 'neutral';
+    const word     = isPrem ? 'PREMIUM' : isDisc ? 'DISCOUNT' : 'FLAT';
+    document.getElementById('prem-result').textContent = sign + premUsd.toFixed(2) + ' USD/oz';
+    document.getElementById('prem-result').className   = 'prem-result ' + cls;
+    document.getElementById('prem-result-sub').textContent =
+      sign + premPct.toFixed(2) + '% · ' + word + ' vs Loco London';
+  } else {
+    document.getElementById('prem-result-sub').textContent = 'Spot data captured at 8am London';
+  }
+
 }
 
 // ── OI TABLE ─────────────────────────────────────────────────────────────────
@@ -670,4 +767,3 @@ async function handleSubmit(e) {
 </script>
 </body>
 </html>
-
