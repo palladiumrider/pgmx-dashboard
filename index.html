@@ -274,14 +274,14 @@ async function handleSubmit(e) {
     <div style="display:flex;align-items:center;gap:16px;">
       <div class="prem-divider"></div>
       <div class="prem-block center">
-        <div class="prem-label">vs Loco London Spot</div>
+        <div class="prem-label">vs Loco London Fwd · 26 Jun 2026</div>
         <div class="prem-result neutral" id="prem-result">—</div>
         <div class="prem-sub" id="prem-result-sub">loading market data…</div>
       </div>
       <div class="prem-divider"></div>
     </div>
     <div class="prem-block right">
-      <div class="prem-label">Platinum Spot · 7am London</div>
+      <div class="prem-label">Loco London Fwd · 26 Jun 2026</div>
       <div class="prem-value" id="prem-spot">—</div>
       <div class="prem-sub" id="prem-spot-sub">USD/oz · CNY/USD: <span id="prem-cny">—</span></div>
     </div>
@@ -559,8 +559,14 @@ function populateStats(data, commodity='platinum') {
     const exVat = bannerSettle && bannerCnyUsd ? (bannerSettle * 31.1035 * bannerCnyUsd / 1.13).toFixed(2) : '—';
     document.getElementById('prem-gfex-usd').textContent = exVat ? '$' + exVat : '—';
   }
+  const bannerFwd  = data.pt_fwd_usd_oz;
+  const fwdDays    = data.pt_fwd_days;
+  const fwdAdj     = data.pt_fwd_adjustment;
+
   if (bannerSpot) {
-    document.getElementById('prem-spot').textContent = '$' + bannerSpot.toFixed(2);
+    // Show forward-adjusted price, not raw spot
+    const displayPrice = bannerFwd ?? bannerSpot;
+    document.getElementById('prem-spot').textContent = '$' + displayPrice.toFixed(2);
     document.getElementById('prem-spot-sub').textContent =
       'USD/oz · CNY/USD: ' + (bannerCnyUsd ? bannerCnyUsd.toFixed(4) : '—');
   }
@@ -572,8 +578,11 @@ function populateStats(data, commodity='platinum') {
     const word     = isPrem ? 'PREMIUM' : isDisc ? 'DISCOUNT' : 'FLAT';
     document.getElementById('prem-result').textContent = sign + premUsd.toFixed(2) + ' USD/oz';
     document.getElementById('prem-result').className   = 'prem-result ' + cls;
+    const adjNote = fwdAdj != null && fwdDays != null
+      ? ` · fwd adj ${fwdAdj}% p.a. · ${fwdDays}d`
+      : '';
     document.getElementById('prem-result-sub').textContent =
-      sign + premPct.toFixed(2) + '% · ' + word + ' vs Loco London';
+      sign + premPct.toFixed(2) + '% · ' + word + adjNote;
   } else {
     document.getElementById('prem-result-sub').textContent = 'Spot data captured at 8am London';
   }
