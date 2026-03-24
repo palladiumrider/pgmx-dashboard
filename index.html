@@ -80,24 +80,8 @@ function calcPremiumJS(gfexCnyG, spotUsdOz, cnyUsd, fwdAdj, tradeDateStr) {
   return { premUsd: +premUsd.toFixed(2), premPct: +premPct.toFixed(2), fwdUsdOz: +fwdUsdOz.toFixed(2) };
 }
 
-function applyCustomSpot() {
-  if (!pgmxData) return;
-
-  const ptToday = parseFloat(document.getElementById('si-pt-today').value);
-  const ptDod   = parseFloat(document.getElementById('si-pt-dod').value);
-  const ptWow   = parseFloat(document.getElementById('si-pt-wow').value);
-  const pdToday = parseFloat(document.getElementById('si-pd-today').value);
-  const pdDod   = parseFloat(document.getElementById('si-pd-dod').value);
-  const pdWow   = parseFloat(document.getElementById('si-pd-wow').value);
-
-  if (!ptToday && !pdToday) {
-    document.getElementById('spot-status').textContent = 'Please enter at least one price.';
-    return;
-  }
-
-  // Build a modified data object with custom spot prices
+function buildCustomData(ptToday, ptDod, ptWow, pdToday, pdDod, pdWow) {
   const custom = JSON.parse(JSON.stringify(pgmxData));
-
   if (ptToday) {
     custom.pt_spot_usd_oz = ptToday;
     const r = calcPremiumJS(pgmxData.pt_gfex_settle_cny_g, ptToday, pgmxData.cny_usd_rate, pgmxData.pt_fwd_adjustment, pgmxData.date_today);
@@ -128,14 +112,55 @@ function applyCustomSpot() {
     const r = calcPremiumJS(pgmxData.pd_gfex_settle_wow, pdWow, pgmxData.cny_usd_rate, pgmxData.pd_fwd_adjustment, pgmxData.date_wow);
     if (r) { custom.pd_premium_usd_oz_wow = r.premUsd; custom.pd_premium_pct_wow = r.premPct; custom.pd_fwd_wow = r.fwdUsdOz; }
   }
+  return custom;
+}
 
+async function applyCustomSpot() {
+  if (!pgmxData) return;
+
+  const ptToday = parseFloat(document.getElementById('si-pt-today').value) || null;
+  const ptDod   = parseFloat(document.getElementById('si-pt-dod').value)   || null;
+  const ptWow   = parseFloat(document.getElementById('si-pt-wow').value)   || null;
+  const pdToday = parseFloat(document.getElementById('si-pd-today').value) || null;
+  const pdDod   = parseFloat(document.getElementById('si-pd-dod').value)   || null;
+  const pdWow   = parseFloat(document.getElementById('si-pd-wow').value)   || null;
+
+  if (!ptToday && !ptDod && !ptWow && !pdToday && !pdDod && !pdWow) {
+    document.getElementById('spot-status').textContent = 'Please enter at least one price.';
+    return;
+  }
+
+  const custom = buildCustomData(ptToday, ptDod, ptWow, pdToday, pdDod, pdWow);
   fillGauge('pt', custom);
   fillGauge('pd', custom);
   usingCustomSpot = true;
 
-  document.getElementById('spot-status').textContent = '✦ Gauges updated with custom prices';
+  document.getElementById('spot-status').textContent = '✦ Saving for all users…';
   document.getElementById('spot-status').className = 'spot-status active';
-  setTimeout(closeSpotModal, 1200);
+
+  // Save to custom-spot.json via Netlify function so all users see it on refresh
+  try {
+    const payload = {
+      gfex_date:  pgmxData.date_today,
+      pt_today:   ptToday, pt_dod: ptDod, pt_wow: ptWow,
+      pd_today:   pdToday, pd_dod: pdDod, pd_wow: pdWow,
+      submitted:  new Date().toISOString()
+    };
+    const resp = await fetch('/.netlify/functions/save-custom-spot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (resp.ok) {
+      document.getElementById('spot-status').textContent = '✦ Saved — all users will see these prices on refresh';
+    } else {
+      document.getElementById('spot-status').textContent = '✦ Updated locally (save failed — check function)';
+    }
+  } catch(e) {
+    document.getElementById('spot-status').textContent = '✦ Updated locally (offline save)';
+  }
+
+  setTimeout(closeSpotModal, 2000);
 }
 
 function resetToApiSpot() {
@@ -383,7 +408,7 @@ function resetToApiSpot() {
 
   .breakdown-table {
     width:100%; border-collapse:collapse; margin-top:10px;
-    font-family:'DM Mono',monospace; font-size:0.52rem; letter-spacing:0.05em;
+    font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.06em;
   }
   .breakdown-table th {
     color:var(--muted); font-weight:400; text-align:right;
@@ -538,8 +563,6 @@ function resetToApiSpot() {
         <div class="gauge-metal">PLATINUM · PT2606</div>
         <div class="gauge-prem neu" id="pt-prem-usd">—</div>
         <div class="gauge-word neu" id="pt-prem-word">vs Loco London Fwd</div>
-        <div class="gauge-row"><span>GFEX settle</span><span id="pt-settle-val">—</span></div>
-        <div class="gauge-row"><span>Loco London fwd</span><span id="pt-fwd-val">—</span></div>
         <div class="gauge-row"><span>USD/CNY</span><span id="pt-cny-val">—</span></div>
         <div class="gauge-row" style="margin-top:8px">
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#00c8ff;display:inline-block;border-radius:2px"></span>Today</span>
@@ -551,7 +574,7 @@ function resetToApiSpot() {
           <tbody>
             <tr><td>GFEX settle</td><td id="pt-bd-gfex">—</td><td id="pt-bd-gfex-dod">—</td><td id="pt-bd-gfex-wow">—</td></tr>
             <tr><td style="padding-left:10px;font-style:italic;opacity:0.7">↳ ex-VAT USD/oz</td><td id="pt-bd-gfex-usd" style="font-style:italic;opacity:0.7">—</td><td id="pt-bd-gfex-usd-dod" style="font-style:italic;opacity:0.7">—</td><td id="pt-bd-gfex-usd-wow" style="font-style:italic;opacity:0.7">—</td></tr>
-            <tr><td>Spot USD/oz</td><td id="pt-bd-spot">—</td><td id="pt-bd-spot-dod">—</td><td id="pt-bd-spot-wow">—</td></tr>
+            <tr><td>7am LL $/oz</td><td id="pt-bd-spot">—</td><td id="pt-bd-spot-dod">—</td><td id="pt-bd-spot-wow">—</td></tr>
             <tr><td>Fwd mid p.a.</td><td id="pt-bd-mid">—</td><td id="pt-bd-mid-dod">—</td><td id="pt-bd-mid-wow">—</td></tr>
             <tr><td>Fwd px USD/oz</td><td id="pt-bd-fwd">—</td><td id="pt-bd-fwd-dod">—</td><td id="pt-bd-fwd-wow">—</td></tr>
           </tbody>
@@ -588,8 +611,6 @@ function resetToApiSpot() {
         <div class="gauge-metal">PALLADIUM · PD2606</div>
         <div class="gauge-prem neu" id="pd-prem-usd">—</div>
         <div class="gauge-word neu" id="pd-prem-word">vs Loco London Fwd</div>
-        <div class="gauge-row"><span>GFEX settle</span><span id="pd-settle-val">—</span></div>
-        <div class="gauge-row"><span>Loco London fwd</span><span id="pd-fwd-val">—</span></div>
         <div class="gauge-row"><span>USD/CNY</span><span id="pd-cny-val">—</span></div>
         <div class="gauge-row" style="margin-top:8px">
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#ff8c00;display:inline-block;border-radius:2px"></span>Today</span>
@@ -601,7 +622,7 @@ function resetToApiSpot() {
           <tbody>
             <tr><td>GFEX settle</td><td id="pd-bd-gfex">—</td><td id="pd-bd-gfex-dod">—</td><td id="pd-bd-gfex-wow">—</td></tr>
             <tr><td style="padding-left:10px;font-style:italic;opacity:0.7">↳ ex-VAT USD/oz</td><td id="pd-bd-gfex-usd" style="font-style:italic;opacity:0.7">—</td><td id="pd-bd-gfex-usd-dod" style="font-style:italic;opacity:0.7">—</td><td id="pd-bd-gfex-usd-wow" style="font-style:italic;opacity:0.7">—</td></tr>
-            <tr><td>Spot USD/oz</td><td id="pd-bd-spot">—</td><td id="pd-bd-spot-dod">—</td><td id="pd-bd-spot-wow">—</td></tr>
+            <tr><td>7am LL $/oz</td><td id="pd-bd-spot">—</td><td id="pd-bd-spot-dod">—</td><td id="pd-bd-spot-wow">—</td></tr>
             <tr><td>Fwd mid p.a.</td><td id="pd-bd-mid">—</td><td id="pd-bd-mid-dod">—</td><td id="pd-bd-mid-wow">—</td></tr>
             <tr><td>Fwd px USD/oz</td><td id="pd-bd-fwd">—</td><td id="pd-bd-fwd-dod">—</td><td id="pd-bd-fwd-wow">—</td></tr>
           </tbody>
@@ -1245,8 +1266,31 @@ async function init() {
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     pgmxData=await res.json();
     populateStats(pgmxData);
-    fillGauge('pt', pgmxData);
-    fillGauge('pd', pgmxData);
+
+    // Check for shared custom spot prices
+    try {
+      const csr = await fetch('data/custom-spot.json?v='+Date.now());
+      if (csr.ok) {
+        const cs = await csr.json();
+        // Only apply if submitted for the same GFEX date
+        if (cs.gfex_date === pgmxData.date_today) {
+          const custom = buildCustomData(cs.pt_today, cs.pt_dod, cs.pt_wow, cs.pd_today, cs.pd_dod, cs.pd_wow);
+          fillGauge('pt', custom);
+          fillGauge('pd', custom);
+          usingCustomSpot = true;
+        } else {
+          fillGauge('pt', pgmxData);
+          fillGauge('pd', pgmxData);
+        }
+      } else {
+        fillGauge('pt', pgmxData);
+        fillGauge('pd', pgmxData);
+      }
+    } catch(_) {
+      fillGauge('pt', pgmxData);
+      fillGauge('pd', pgmxData);
+    }
+
     populateOITable('platinum');
     buildCharts('platinum');
   } catch(err) {
@@ -1330,24 +1374,8 @@ function calcPremiumJS(gfexCnyG, spotUsdOz, cnyUsd, fwdAdj, tradeDateStr) {
   return { premUsd: +premUsd.toFixed(2), premPct: +premPct.toFixed(2), fwdUsdOz: +fwdUsdOz.toFixed(2) };
 }
 
-function applyCustomSpot() {
-  if (!pgmxData) return;
-
-  const ptToday = parseFloat(document.getElementById('si-pt-today').value);
-  const ptDod   = parseFloat(document.getElementById('si-pt-dod').value);
-  const ptWow   = parseFloat(document.getElementById('si-pt-wow').value);
-  const pdToday = parseFloat(document.getElementById('si-pd-today').value);
-  const pdDod   = parseFloat(document.getElementById('si-pd-dod').value);
-  const pdWow   = parseFloat(document.getElementById('si-pd-wow').value);
-
-  if (!ptToday && !pdToday) {
-    document.getElementById('spot-status').textContent = 'Please enter at least one price.';
-    return;
-  }
-
-  // Build a modified data object with custom spot prices
+function buildCustomData(ptToday, ptDod, ptWow, pdToday, pdDod, pdWow) {
   const custom = JSON.parse(JSON.stringify(pgmxData));
-
   if (ptToday) {
     custom.pt_spot_usd_oz = ptToday;
     const r = calcPremiumJS(pgmxData.pt_gfex_settle_cny_g, ptToday, pgmxData.cny_usd_rate, pgmxData.pt_fwd_adjustment, pgmxData.date_today);
@@ -1378,14 +1406,55 @@ function applyCustomSpot() {
     const r = calcPremiumJS(pgmxData.pd_gfex_settle_wow, pdWow, pgmxData.cny_usd_rate, pgmxData.pd_fwd_adjustment, pgmxData.date_wow);
     if (r) { custom.pd_premium_usd_oz_wow = r.premUsd; custom.pd_premium_pct_wow = r.premPct; custom.pd_fwd_wow = r.fwdUsdOz; }
   }
+  return custom;
+}
 
+async function applyCustomSpot() {
+  if (!pgmxData) return;
+
+  const ptToday = parseFloat(document.getElementById('si-pt-today').value) || null;
+  const ptDod   = parseFloat(document.getElementById('si-pt-dod').value)   || null;
+  const ptWow   = parseFloat(document.getElementById('si-pt-wow').value)   || null;
+  const pdToday = parseFloat(document.getElementById('si-pd-today').value) || null;
+  const pdDod   = parseFloat(document.getElementById('si-pd-dod').value)   || null;
+  const pdWow   = parseFloat(document.getElementById('si-pd-wow').value)   || null;
+
+  if (!ptToday && !ptDod && !ptWow && !pdToday && !pdDod && !pdWow) {
+    document.getElementById('spot-status').textContent = 'Please enter at least one price.';
+    return;
+  }
+
+  const custom = buildCustomData(ptToday, ptDod, ptWow, pdToday, pdDod, pdWow);
   fillGauge('pt', custom);
   fillGauge('pd', custom);
   usingCustomSpot = true;
 
-  document.getElementById('spot-status').textContent = '✦ Gauges updated with custom prices';
+  document.getElementById('spot-status').textContent = '✦ Saving for all users…';
   document.getElementById('spot-status').className = 'spot-status active';
-  setTimeout(closeSpotModal, 1200);
+
+  // Save to custom-spot.json via Netlify function so all users see it on refresh
+  try {
+    const payload = {
+      gfex_date:  pgmxData.date_today,
+      pt_today:   ptToday, pt_dod: ptDod, pt_wow: ptWow,
+      pd_today:   pdToday, pd_dod: pdDod, pd_wow: pdWow,
+      submitted:  new Date().toISOString()
+    };
+    const resp = await fetch('/.netlify/functions/save-custom-spot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (resp.ok) {
+      document.getElementById('spot-status').textContent = '✦ Saved — all users will see these prices on refresh';
+    } else {
+      document.getElementById('spot-status').textContent = '✦ Updated locally (save failed — check function)';
+    }
+  } catch(e) {
+    document.getElementById('spot-status').textContent = '✦ Updated locally (offline save)';
+  }
+
+  setTimeout(closeSpotModal, 2000);
 }
 
 function resetToApiSpot() {
