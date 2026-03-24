@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PGMx — GFEX Platinum Activity Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function handleOverlayClick(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = new FormData(form);
+  try {
+    await fetch('/', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: new URLSearchParams(data).toString() });
+  } catch(_) {}
+  document.getElementById('formView').style.display='none';
+  document.getElementById('thankYouView').style.display='block';
+  setTimeout(closeModal, 3000);
+}
+
+</script>
+<style>
+  :root {
+    --bg:#05080f; --surface:#0b0f1a; --surface2:#0f1422; --border:#1a2035;
+    --neon-blue:#00c8ff; --neon-green:#00ff88; --neon-pink:#ff2d78;
+    --neon-orange:#ff8c00; --neon-purple:#b347ff;
+    --text:#dde8ff; --muted:#4a5580; --gain:#00ff88; --loss:#ff2d78;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Syne',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image:linear-gradient(rgba(0,200,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.025) 1px,transparent 1px);
+    background-size:48px 48px; animation:gridDrift 25s linear infinite; pointer-events:none; z-index:0;
+  }
+  @keyframes gridDrift { to { background-position:48px 48px; } }
+  body::after {
+    content:''; position:fixed; width:700px; height:700px;
+    background:radial-gradient(circle,rgba(0,200,255,0.06) 0%,transparent 65%);
+    bottom:-200px; left:-200px; pointer-events:none; z-index:0;
+    animation:orbPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes orbPulse { from{transform:scale(1);} to{transform:scale(1.25);} }
+  .container { max-width:1440px; margin:0 auto; padding:0 36px 72px; position:relative; z-index:1; }
+  header { display:flex; align-items:flex-end; justify-content:space-between; padding:36px 0 32px; border-bottom:1px solid var(--border); margin-bottom:36px; }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:3.4rem; letter-spacing:0.06em; background:linear-gradient(120deg,var(--neon-blue) 0%,#6af0ff 40%,var(--neon-purple) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; filter:drop-shadow(0 0 18px rgba(0,200,255,0.45)); }
+  .logo-sub { font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+  .logo-tagline { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.14em; color:var(--neon-blue); opacity:0.7; margin-top:3px; }
+  .header-right { display:flex; align-items:center; gap:20px; }
+  .live-badge { display:flex; align-items:center; gap:8px; background:rgba(0,255,136,0.07); border:1px solid rgba(0,255,136,0.25); padding:8px 16px; border-radius:3px; font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.16em; color:var(--neon-green); }
+  .live-dot { width:7px; height:7px; background:var(--neon-green); border-radius:50%; box-shadow:0 0 7px var(--neon-green); animation:blink 1.3s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
+  .clock { font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.1em; color:var(--muted); }
+  .stats-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:36px; opacity:0; transform:translateY(18px); animation:fadeUp 0.55s ease forwards 0.15s; }
+  @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-top:2px solid; padding:18px 20px; border-radius:2px; position:relative; overflow:hidden; transition:transform 0.18s,box-shadow 0.18s; cursor:default; }
+  .stat-card:hover { transform:translateY(-3px); box-shadow:0 14px 40px rgba(0,0,0,0.45); }
+  .stat-card::before { content:''; position:absolute; inset:0; opacity:0.05; background:linear-gradient(135deg,currentColor 0%,transparent 55%); }
+  .stat-card:nth-child(1){ border-top-color:var(--neon-blue);   color:var(--neon-blue);   }
+  .stat-card:nth-child(2){ border-top-color:var(--neon-green);  color:var(--neon-green);  }
+  .stat-card:nth-child(3){ border-top-color:var(--neon-pink);   color:var(--neon-pink);   }
+  .stat-card:nth-child(4){ border-top-color:var(--neon-orange); color:var(--neon-orange); }
+  .stat-card:nth-child(5){ border-top-color:var(--neon-purple); color:var(--neon-purple); }
+  .stat-label { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .stat-value { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:0.03em; line-height:1; color:var(--text); }
+  .stat-change { font-family:'DM Mono',monospace; font-size:0.68rem; margin-top:5px; }
+  .stat-change.up{color:var(--gain);} .stat-change.down{color:var(--loss);} .stat-change.neu{color:var(--muted);}
+  .section-title { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:0.12em; color:var(--text); margin-bottom:14px; display:flex; align-items:center; gap:14px; }
+  .section-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border),transparent); }
+  .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:2px; overflow:hidden; margin-bottom:44px; opacity:0; transform:translateY(18px); animation:fadeUp 0.55s ease forwards 0.3s; }
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:var(--surface2); border-bottom:1px solid var(--border); }
+  th { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); padding:13px 20px; text-align:left; }
+  tbody tr { border-bottom:1px solid rgba(26,32,53,0.7); transition:background 0.14s; }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:rgba(0,200,255,0.04); }
+  td { padding:13px 20px; font-size:0.86rem; font-family:'DM Mono',monospace; }
+  .contract-code { font-family:'Syne',sans-serif; font-weight:700; font-size:0.92rem; letter-spacing:0.05em; color:var(--neon-blue); text-transform:uppercase; }
+  .contract-name { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+  .pill { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:2px; font-size:0.7rem; font-weight:600; letter-spacing:0.08em; }
+  .pill.front { background:rgba(0,255,136,0.1); color:var(--gain); border:1px solid rgba(0,255,136,0.2); }
+  .pill.back  { background:rgba(0,200,255,0.08); color:var(--neon-blue); border:1px solid rgba(0,200,255,0.18); }
+  .chg-up{color:var(--gain);} .chg-down{color:var(--loss);} .chg-neu{color:var(--muted);}
+  .bar-cell { display:flex; align-items:center; gap:8px; }
+  .mini-bar { height:3px; border-radius:2px; min-width:3px; }
+  .tab-row { display:flex; gap:8px; margin-bottom:20px; opacity:0; transform:translateY(18px); animation:fadeUp 0.55s ease forwards 0.4s; }
+  .tab-btn { font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; padding:8px 20px; border-radius:2px; cursor:pointer; border:1px solid var(--border); background:var(--surface); color:var(--muted); transition:all 0.18s; }
+  .tab-btn.active { background:rgba(0,200,255,0.1); border-color:var(--neon-blue); color:var(--neon-blue); }
+  .tab-btn.active-range { background:rgba(179,71,255,0.12); border-color:var(--neon-purple); color:var(--neon-purple); }
+  .tab-btn:hover:not(.active) { border-color:var(--muted); color:var(--text); }
+  .charts-wrap { opacity:0; transform:translateY(18px); animation:fadeUp 0.55s ease forwards 0.5s; }
+  .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:26px; position:relative; overflow:hidden; margin-bottom:20px; }
+  .chart-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .chart-card.blue-stripe::before   { background:linear-gradient(90deg,var(--neon-blue),var(--neon-purple)); }
+  .chart-card.orange-stripe::before { background:linear-gradient(90deg,var(--neon-orange),var(--neon-pink)); }
+  .chart-card.green-stripe::before  { background:linear-gradient(90deg,var(--neon-green),var(--neon-blue)); }
+  .chart-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
+  .chart-title  { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:0.1em; color:var(--text); }
+  .chart-sub    { font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--muted); letter-spacing:0.12em; margin-top:3px; }
+  .chart-kpi    { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; text-align:right; color:var(--text); }
+  .chart-kpi-sub{ font-family:'DM Mono',monospace; font-size:0.62rem; text-align:right; margin-top:2px; }
+  .disclaimer { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.1em; color:var(--muted); text-align:center; margin-top:32px; padding-top:20px; border-top:1px solid var(--border); opacity:0.7; }
+
+  /* ── STICKY SURVEY BUTTON ── */
+  .survey-trigger {
+    position:fixed; right:0; top:50%; transform:translateY(-50%);
+    background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));
+    color:#fff; font-family:'DM Mono',monospace; font-size:0.65rem;
+    letter-spacing:0.15em; text-transform:uppercase;
+    padding:14px 10px; border-radius:4px 0 0 4px;
+    cursor:pointer; z-index:100; border:none;
+    writing-mode:vertical-rl; text-orientation:mixed;
+    box-shadow:-4px 0 20px rgba(179,71,255,0.35);
+    transition:padding 0.2s, box-shadow 0.2s;
+  }
+  .survey-trigger:hover { padding:14px 14px; box-shadow:-6px 0 28px rgba(179,71,255,0.55); }
+
+  /* ── MODAL OVERLAY ── */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(5,8,15,0.85); backdrop-filter:blur(6px);
+    align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+
+  .modal {
+    background:var(--surface); border:1px solid var(--border);
+    border-top:2px solid var(--neon-purple);
+    border-radius:4px; padding:36px 40px; width:100%; max-width:520px;
+    position:relative; animation:fadeUp 0.3s ease;
+    box-shadow:0 24px 80px rgba(0,0,0,0.6);
+  }
+  .modal-close {
+    position:absolute; top:16px; right:20px;
+    background:none; border:none; color:var(--muted);
+    font-size:1.2rem; cursor:pointer; line-height:1;
+    transition:color 0.15s;
+  }
+  .modal-close:hover { color:var(--text); }
+
+  .modal-title {
+    font-family:'Bebas Neue',sans-serif; font-size:1.6rem;
+    letter-spacing:0.1em; color:var(--text); margin-bottom:6px;
+  }
+  .modal-sub {
+    font-family:'DM Mono',monospace; font-size:0.65rem;
+    letter-spacing:0.12em; color:var(--muted); margin-bottom:28px;
+    line-height:1.6;
+  }
+
+  .form-row { margin-bottom:20px; }
+  .form-label {
+    font-family:'DM Mono',monospace; font-size:0.65rem;
+    letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--muted); display:block; margin-bottom:7px;
+  }
+  .form-input {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:2px; padding:10px 14px;
+    font-family:'DM Mono',monospace; font-size:0.88rem; color:var(--text);
+    outline:none; transition:border-color 0.15s;
+  }
+  .form-input:focus { border-color:var(--neon-purple); }
+  .form-input::placeholder { color:var(--muted); }
+
+  .form-row-split { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+
+  .form-hint {
+    font-family:'DM Mono',monospace; font-size:0.6rem;
+    color:var(--muted); margin-top:5px; letter-spacing:0.08em;
+  }
+
+  .submit-btn {
+    width:100%; padding:13px; border:none; border-radius:2px; cursor:pointer;
+    background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));
+    color:#fff; font-family:'DM Mono',monospace; font-size:0.75rem;
+    letter-spacing:0.18em; text-transform:uppercase;
+    transition:opacity 0.18s, transform 0.18s; margin-top:8px;
+  }
+  .submit-btn:hover { opacity:0.88; transform:translateY(-1px); }
+
+  .form-divider {
+    border:none; border-top:1px solid var(--border); margin:22px 0;
+  }
+  .optional-label {
+    font-family:'DM Mono',monospace; font-size:0.6rem;
+    letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--neon-purple); opacity:0.7; margin-bottom:14px; display:block;
+  }
+  .thankyou {
+    display:none; text-align:center; padding:20px 0;
+  }
+  .thankyou-icon { font-size:2rem; margin-bottom:12px; }
+  .thankyou-title {
+    font-family:'Bebas Neue',sans-serif; font-size:1.4rem;
+    letter-spacing:0.1em; color:var(--neon-green); margin-bottom:8px;
+  }
+  .thankyou-sub {
+    font-family:'DM Mono',monospace; font-size:0.7rem;
+    color:var(--muted); letter-spacing:0.1em; line-height:1.7;
+  }
+
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <div class="logo">PGMx</div>
+      <div class="logo-sub">Activity Dashboard</div>
+      <div class="logo-tagline">A first take on GFEX PGM data</div>
+    </div>
+    <div class="header-right">
+      <div class="clock" id="clock">--</div>
+      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    </div>
+  </header>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Settle vs 20D Avg</div>
+      <div class="stat-value" id="s-settle-vs-avg">—</div>
+      <div class="stat-change neu" id="s-settle-vs-avg-sub">loading…</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">OI vs 20D Avg</div>
+      <div class="stat-value" id="s-oi-vs-avg">—</div>
+      <div class="stat-change neu" id="s-oi-vs-avg-sub">loading…</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Volume vs 20D Avg</div>
+      <div class="stat-value" id="s-vol-vs-avg">—</div>
+      <div class="stat-change neu" id="s-vol-vs-avg-sub">loading…</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">PT/PD Ratio</div>
+      <div class="stat-value" id="s-ratio">—</div>
+      <div class="stat-change neu" id="s-ratio-sub">loading…</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Settle DoD</div>
+      <div class="stat-value" id="s-dod">—</div>
+      <div class="stat-change neu" id="s-dod-sub">loading…</div>
+    </div>
+  </div>
+
+  <div class="section-title" id="oi-title">Platinum — Open Interest by Contract</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Contract</th><th>Type</th><th>Open Interest (lots)</th><th>OI Chg DoD</th><th>OI Chg WoW</th></tr></thead>
+      <tbody id="oi-table"></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">Market Charts</div>
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab('platinum')">Platinum</button>
+    <button class="tab-btn" onclick="switchTab('palladium')">Palladium</button>
+    <div style="flex:1"></div>
+    <button class="range-btn tab-btn" onclick="setRange(10)">2W</button>
+    <button class="range-btn tab-btn" onclick="setRange(22)">1M</button>
+    <button class="range-btn tab-btn active-range" onclick="setRange(44)">2M</button>
+    <button class="range-btn tab-btn" onclick="setRange(66)">3M</button>
+    <button class="range-btn tab-btn" onclick="setRange('launch')">SINCE LAUNCH</button>
+    </div>
+
+  <div class="charts-wrap">
+    <div class="chart-card blue-stripe">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title" id="candle-title">— Daily OHLC · Last 90 Sessions</div>
+          <div class="chart-sub">GFEX FRONT MONTH · CNY/G · SETTLE PRICE</div>
+        </div>
+        <div>
+          <div class="chart-kpi" id="candle-kpi" style="color:var(--neon-blue)">—</div>
+          <div class="chart-kpi-sub" id="candle-kpi-sub">—</div>
+        </div>
+      </div>
+      <canvas id="candleChart" style="max-height:320px;"></canvas>
+    </div>
+    <div class="chart-card orange-stripe">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title" id="vol-title">— Volume · Last 90 Sessions</div>
+          <div class="chart-sub">DAILY VOLUME · LOTS TRADED</div>
+        </div>
+        <div>
+          <div class="chart-kpi" id="vol-kpi" style="color:var(--neon-orange)">—</div>
+          <div class="chart-kpi-sub" style="color:var(--neon-orange)">LATEST DAY</div>
+        </div>
+      </div>
+      <canvas id="volChart" style="max-height:180px;"></canvas>
+    </div>
+    <div class="chart-card green-stripe">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title" id="oi-chart-title">— Open Interest · Last 90 Sessions</div>
+          <div class="chart-sub">TOTAL OPEN INTEREST · LOTS</div>
+        </div>
+        <div>
+          <div class="chart-kpi" id="oi-kpi" style="color:var(--neon-green)">—</div>
+          <div class="chart-kpi-sub" style="color:var(--neon-green)">LATEST DAY</div>
+        </div>
+      </div>
+      <canvas id="oiChart" style="max-height:180px;"></canvas>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    Data sourced from GFEX (Guangzhou Futures Exchange) via automated daily scrape.
+    PT = Platinum Futures · PD = Palladium Futures.
+    Last generated: <span id="generated-ts">—</span>
+  </div>
+
+  <!-- ── SURVEY TRIGGER BUTTON ── -->
+  <button class="survey-trigger" onclick="openModal()">Share Your Mids</button>
+
+  <!-- ── SURVEY MODAL ── -->
+  <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+
+      <!-- Form -->
+      <div id="formView">
+        <div class="modal-title">Forward Mids Survey</div>
+        <div class="modal-sub">
+          Help us improve PGMx by sharing your forward mid estimates<br>
+          for the Jun 2026 contract. All inputs are used to build<br>
+          premium &amp; discount analytics on this site.
+        </div>
+
+        <form name="forward-mids" netlify netlify-honeypot="bot-field" onsubmit="handleSubmit(event)">
+          <input type="hidden" name="form-name" value="forward-mids">
+          <input type="hidden" name="bot-field" style="display:none">
+
+          <div class="form-row-split">
+            <div>
+              <label class="form-label">Platinum Mid (% vs settle)</label>
+              <input class="form-input" type="number" name="platinum_mid_pct" step="0.01" placeholder="e.g. +1.25" required>
+              <div class="form-hint">PT2606 · 26 Jun 2026</div>
+            </div>
+            <div>
+              <label class="form-label">Palladium Mid (% vs settle)</label>
+              <input class="form-input" type="number" name="palladium_mid_pct" step="0.01" placeholder="e.g. -0.50" required>
+              <div class="form-hint">PD2606 · 26 Jun 2026</div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Notes <span style="opacity:0.5">(optional)</span></label>
+            <input class="form-input" type="text" name="notes" placeholder="Any context or rationale…">
+          </div>
+
+          <hr class="form-divider">
+          <span class="optional-label">Optional — to be notified when premium analytics go live</span>
+
+          <div class="form-row">
+            <label class="form-label">Email address</label>
+            <input class="form-input" type="email" name="email" placeholder="your@email.com">
+            <div class="form-hint">We will only use this to notify you of updates to this site.</div>
+          </div>
+
+          <button type="submit" class="submit-btn">Submit My Mids →</button>
+        </form>
+      </div>
+
+      <!-- Thank you state -->
+      <div class="thankyou" id="thankYouView">
+        <div class="thankyou-icon">✦</div>
+        <div class="thankyou-title">Thank You</div>
+        <div class="thankyou-sub">
+          Your forward mids have been recorded.<br>
+          We'll use them to build premium &amp; discount analytics<br>
+          and will notify you when they go live.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── CLOCK ──────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now=new Date(), days=['SUN','MON','TUE','WED','THU','FRI','SAT'], months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const pad=n=>String(n).padStart(2,'0');
+  document.getElementById('clock').textContent=`${days[now.getDay()]} ${pad(now.getDate())} ${months[now.getMonth()]} ${now.getFullYear()} · ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+setInterval(updateClock,1000); updateClock();
+
+Chart.defaults.color='#4a5580';
+Chart.defaults.font.family="'DM Mono', monospace";
+Chart.defaults.font.size=11;
+const gridCol='rgba(26,32,53,0.9)';
+
+let candleChart=null, volChart=null, oiChart=null, pgmxData=null, activeTab='platinum', activeRange=44;
+
+const fmt  = n => n!=null ? Number(n).toLocaleString() : '—';
+const fmtP = n => { if(n==null) return '—'; return (n>0?'▲ +':'▼ ')+Math.abs(n).toFixed(2)+'%'; };
+const cls  = n => n==null?'neu':n>0?'up':n<0?'down':'neu';
+
+// ── STAT CARDS ───────────────────────────────────────────────────────────────
+function avg(arr) { return arr.reduce((s,v)=>s+v,0)/arr.length; }
+
+function populateStats(data, commodity='platinum') {
+  const cDays   = data[commodity].candlestick.data;
+  const ptDays  = data.platinum.candlestick.data;
+  const pdDays  = data.palladium.candlestick.data;
+  const ptLast  = ptDays[ptDays.length-1];
+  const pdLast  = pdDays[pdDays.length-1];
+  const ptPrev  = ptDays[ptDays.length-2];
+  const label   = commodity.charAt(0).toUpperCase()+commodity.slice(1).slice(0,2).toUpperCase();
+
+  // helper: set a stat card
+  function setCard(valId, subId, value, subText, changeVal) {
+    document.getElementById(valId).textContent = value;
+    const el = document.getElementById(subId);
+    el.textContent = subText;
+    el.className = 'stat-change ' + cls(changeVal);
+  }
+
+  // 1 — Settle vs 20-day average (platinum)
+  const cLast   = cDays[cDays.length-1];
+  const cPrev   = cDays[cDays.length-2];
+  const pt20 = cDays.slice(-21,-1).map(d=>d.settle??d.close).filter(v=>v!=null);
+  const ptSettle = cLast.settle??cLast.close;
+  const ptAvg20  = pt20.length ? avg(pt20) : null;
+  const ptVsAvg  = ptAvg20 ? +((ptSettle-ptAvg20)/ptAvg20*100).toFixed(2) : null;
+  setCard('s-settle-vs-avg','s-settle-vs-avg-sub',
+    ptSettle!=null?`${ptSettle.toFixed(1)} CNY/g`:'—',
+    ptVsAvg!=null?(ptVsAvg>=0?`▲ +${ptVsAvg}% vs 20D avg`:`▼ ${ptVsAvg}% vs 20D avg`):'—',
+    ptVsAvg);
+
+  // 2 — Total OI vs 20-day average (platinum)
+  const ptTotalOI = data[commodity].oi_table.reduce((s,r)=>s+(r.oi||0),0);
+  const ptOI20    = cDays.slice(-21,-1).map(d=>d.oi).filter(v=>v!=null);
+  const ptOIAvg   = ptOI20.length ? avg(ptOI20) : null;
+  const ptOIVsAvg = ptOIAvg ? +((ptTotalOI-ptOIAvg)/ptOIAvg*100).toFixed(2) : null;
+  const oiSignal  = ptOIVsAvg!=null?(ptOIVsAvg>=0?'Building':'Unwinding'):'—';
+  setCard('s-oi-vs-avg','s-oi-vs-avg-sub',
+    fmt(ptTotalOI),
+    ptOIVsAvg!=null?`${oiSignal} · ${ptOIVsAvg>=0?'+':''}${ptOIVsAvg}% vs 20D avg`:'—',
+    ptOIVsAvg);
+
+  // 3 — Volume vs 20-day average (platinum)
+  const ptVol20   = cDays.slice(-21,-1).map(d=>d.volume).filter(v=>v!=null);
+  const ptVolAvg  = ptVol20.length ? avg(ptVol20) : null;
+  const ptVolVsAvg= ptVolAvg ? +((cLast.volume-ptVolAvg)/ptVolAvg*100).toFixed(2) : null;
+  const volSignal = ptVolVsAvg!=null?(ptVolVsAvg>=0?'Active':'Quiet'):'—';
+  setCard('s-vol-vs-avg','s-vol-vs-avg-sub',
+    fmt(ptLast.volume),
+    ptVolVsAvg!=null?`${volSignal} · ${ptVolVsAvg>=0?'+':''}${ptVolVsAvg}% vs 20D avg`:'—',
+    ptVolVsAvg);
+
+
+  // 4 — PT/PD ratio
+  const pdSettle  = pdLast.settle??pdLast.close;
+  const ratio     = (ptSettle&&pdSettle) ? (ptSettle/pdSettle).toFixed(3) : '—';
+  const ptPrevS   = ptPrev?(ptPrev.settle??ptPrev.close):null;
+  const pdPrevIdx = pdDays.length-2;
+  const pdPrev    = pdPrevIdx>=0?pdDays[pdPrevIdx]:null;
+  const pdPrevS   = pdPrev?(pdPrev.settle??pdPrev.close):null;
+  const prevRatio = (ptPrevS&&pdPrevS)?(ptPrevS/pdPrevS):null;
+  const ratioDod  = (prevRatio&&ratio!=='—') ? +((ratio-prevRatio)/prevRatio*100).toFixed(2) : null;
+  setCard('s-ratio','s-ratio-sub',
+    ratio,
+    ratioDod!=null?(ratioDod>=0?`▲ +${ratioDod}% DoD`:`▼ ${ratioDod}% DoD`):`PT settle / PD settle`,
+    ratioDod);
+
+  // 5 — Settle % change DoD (platinum)
+  const ptDod = cPrev ? +((ptSettle-(cPrev.settle??cPrev.close))/(cPrev.settle??cPrev.close)*100).toFixed(2) : null;
+  setCard('s-dod','s-dod-sub',
+    ptDod!=null?(ptDod>=0?`+${ptDod}%`:`${ptDod}%`):'—',
+    `${cLast.date} · settle ${ptSettle!=null?ptSettle.toFixed(1):'—'}`,
+    ptDod);
+
+  document.getElementById('generated-ts').textContent=data.generated;
+}
+
+// ── OI TABLE ─────────────────────────────────────────────────────────────────
+function populateOITable(commodity) {
+  const rows=pgmxData[commodity].oi_table;
+  const label=commodity.charAt(0).toUpperCase()+commodity.slice(1);
+  document.getElementById('oi-title').textContent=label+' — Open Interest by Contract';
+  const tbody=document.getElementById('oi-table');
+  tbody.innerHTML='';
+  rows.forEach((r,i)=>{
+    const isFront=i===0, barW=r.dod_pct!=null?Math.min(Math.abs(r.dod_pct)*6,80):0;
+    const barCol=(r.dod_pct??0)>=0?'var(--neon-green)':'var(--neon-pink)';
+    tbody.innerHTML+=`<tr>
+      <td><div class="contract-code">${r.contract.toUpperCase()}</div><div class="contract-name">GFEX ${label} Futures</div></td>
+      <td><span class="pill ${isFront?'front':'back'}">${isFront?'◆ FRONT':'DEFERRED'}</span></td>
+      <td style="color:var(--text);font-weight:600">${fmt(r.oi)}</td>
+      <td><div class="bar-cell"><div class="mini-bar" style="width:${barW}px;background:${barCol}"></div><span class="${cls(r.dod_pct)}">${fmtP(r.dod_pct)}</span></div></td>
+      <td class="${cls(r.wow_pct)}">${fmtP(r.wow_pct)}</td>
+    </tr>`;
+  });
+}
+
+// ── CANDLESTICK WICK PLUGIN ───────────────────────────────────────────────────
+const wickPlugin = {
+  id:'wickPlugin',
+  afterDatasetDraw(chart) {
+    const ds=chart.data.datasets[0];
+    if(!ds||!ds._ohlc) return;
+    const meta=chart.getDatasetMeta(0), ctx=chart.ctx;
+    ctx.save();
+    meta.data.forEach((bar,i)=>{
+      const d=ds._ohlc[i], isUp=d.c>=d.o;
+      ctx.strokeStyle=isUp?'#00ff88':'#ff2d78';
+      ctx.lineWidth=1.5;
+      const x=bar.x;
+      const yH=chart.scales.y.getPixelForValue(d.h);
+      const yL=chart.scales.y.getPixelForValue(d.l);
+      const yTop=chart.scales.y.getPixelForValue(Math.max(d.o,d.c));
+      const yBot=chart.scales.y.getPixelForValue(Math.min(d.o,d.c));
+      ctx.beginPath(); ctx.moveTo(x,yH); ctx.lineTo(x,yTop); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x,yBot); ctx.lineTo(x,yL); ctx.stroke();
+    });
+    ctx.restore();
+  }
+};
+
+// ── BUILD CHARTS ─────────────────────────────────────────────────────────────
+function buildCharts(commodity) {
+  const cs=pgmxData[commodity].candlestick, contract=cs.contract.toUpperCase();
+  const allDays=cs.data, days=activeRange==='launch'?allDays.filter(d=>d.date>='2025-11-27'):allDays.slice(-activeRange);
+  const last=days[days.length-1], prev=days[days.length-2];
+
+  const rangeLabel=activeRange==='launch'?'Since Launch (27 Nov 2025)':activeRange===10?'Last 2 Weeks':activeRange===22?'Last Month':activeRange===44?'Last 2 Months':'Last 3 Months';
+  document.getElementById('candle-title').textContent=`${contract} — Daily OHLC · ${rangeLabel}`;
+  document.getElementById('vol-title').textContent=`${contract} — Volume · ${rangeLabel}`;
+  document.getElementById('oi-chart-title').textContent=`${contract} — Open Interest · ${rangeLabel}`;
+
+
+
+  const settle=last.settle??last.close, prevSettle=prev?(prev.settle??prev.close):null;
+  const pct=prevSettle?((settle-prevSettle)/prevSettle*100).toFixed(2):null;
+  document.getElementById('candle-kpi').textContent=settle!=null?settle.toFixed(2):'—';
+  document.getElementById('candle-kpi-sub').textContent=pct?(pct>0?`▲ +${pct}%`:`▼ ${pct}%`)+' LAST SESSION':'—';
+  document.getElementById('candle-kpi-sub').style.color=pct>=0?'var(--neon-green)':'var(--neon-pink)';
+  document.getElementById('vol-kpi').textContent=fmt(last.volume);
+  document.getElementById('oi-kpi').textContent=fmt(last.oi);
+
+  if(candleChart){candleChart.destroy();candleChart=null;}
+  if(volChart){volChart.destroy();volChart=null;}
+  if(oiChart){oiChart.destroy();oiChart=null;}
+
+  const labels=days.map(d=>d.date);
+  const ohlc=days.map(d=>({o:d.open,h:d.high,l:d.low,c:d.close}));
+  const bodyData=days.map(d=>[Math.min(d.open,d.close),Math.max(d.open,d.close)]);
+  const bodyColors=days.map(d=>d.close>=d.open?'rgba(0,255,136,0.85)':'rgba(255,45,120,0.85)');
+
+  // y-axis minimums — padded 2% below the range minimum
+  const priceMin = Math.min(...days.map(d=>d.low));
+  const priceMax = Math.max(...days.map(d=>d.high));
+  const pricePad = (priceMax - priceMin) * 0.02;
+  const volMin   = 0; // volume always starts at 0
+  const oiMin    = Math.min(...days.map(d=>d.oi));
+  const oiMax    = Math.max(...days.map(d=>d.oi));
+  const oiPad    = (oiMax - oiMin) * 0.05;
+
+  // Candlestick
+  const cCtx=document.getElementById('candleChart').getContext('2d');
+  candleChart=new Chart(cCtx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{ label:contract, data:bodyData, backgroundColor:bodyColors, borderColor:bodyColors, borderWidth:1, borderSkipped:false, barPercentage:0.5, categoryPercentage:0.8, _ohlc:ohlc }]
+    },
+    options:{
+      responsive:true, animation:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#0b0f1a',borderColor:'#1a2035',borderWidth:1,
+          callbacks:{label:ctx=>{const d=ohlc[ctx.dataIndex];return `O:${d.o}  H:${d.h}  L:${d.l}  C:${d.c}`;}}
+        }
+      },
+      scales:{
+        x:{grid:{color:gridCol},ticks:{maxTicksLimit:10,maxRotation:0}},
+        y:{position:'left',min:priceMin-pricePad,grid:{color:gridCol},ticks:{callback:v=>v.toFixed(0)}}
+      }
+    },
+    plugins:[wickPlugin]
+  });
+
+  // Volume
+  const volColors=days.map(d=>d.close>=d.open?'rgba(255,140,0,0.75)':'rgba(255,45,120,0.5)');
+  const vCtx=document.getElementById('volChart').getContext('2d');
+  volChart=new Chart(vCtx,{
+    type:'bar',
+    data:{labels,datasets:[{label:'Volume',data:days.map(d=>d.volume),backgroundColor:volColors,borderRadius:1,borderSkipped:false}]},
+    options:{
+      responsive:true,animation:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#0b0f1a',borderColor:'#1a2035',borderWidth:1,callbacks:{label:ctx=>` ${fmt(ctx.parsed.y)} lots`}}},
+      scales:{x:{grid:{color:gridCol},ticks:{maxTicksLimit:10,maxRotation:0}},y:{min:volMin,grid:{color:gridCol},ticks:{callback:v=>(v/1000).toFixed(0)+'k'}}}
+    }
+  });
+
+  // OI line
+  const oCtx=document.getElementById('oiChart').getContext('2d');
+  const oiGrad=oCtx.createLinearGradient(0,0,0,160);
+  oiGrad.addColorStop(0,'rgba(0,255,136,0.3)'); oiGrad.addColorStop(1,'rgba(0,255,136,0.0)');
+  oiChart=new Chart(oCtx,{
+    type:'line',
+    data:{labels,datasets:[{label:'Open Interest',data:days.map(d=>d.oi),borderColor:'#00ff88',borderWidth:2,pointRadius:0,pointHoverRadius:4,fill:true,backgroundColor:oiGrad,tension:0.3}]},
+    options:{
+      responsive:true,animation:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#0b0f1a',borderColor:'#1a2035',borderWidth:1,callbacks:{label:ctx=>` ${fmt(ctx.parsed.y)} lots`}}},
+      scales:{x:{grid:{color:gridCol},ticks:{maxTicksLimit:10,maxRotation:0}},y:{min:oiMin-oiPad,grid:{color:gridCol},ticks:{callback:v=>(v/1000).toFixed(0)+'k'}}}
+    }
+  });
+}
+
+// ── TAB SWITCH ───────────────────────────────────────────────────────────────
+function switchTab(commodity) {
+  activeTab = commodity;
+  document.querySelectorAll('.tab-btn:not(.range-btn)').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===commodity));
+  if(pgmxData){populateStats(pgmxData,commodity);populateOITable(commodity);buildCharts(commodity);}
+}
+
+function setRange(days) {
+  activeRange = days;
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active-range'));
+  event.target.classList.add('active-range');
+  if(pgmxData) buildCharts(activeTab);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const res=await fetch('data/pgmx-data.json?v='+Date.now());
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    pgmxData=await res.json();
+    populateStats(pgmxData);
+    populateOITable('platinum');
+    buildCharts('platinum');
+  } catch(err) {
+    console.error('Failed to load pgmx-data.json:',err);
+    document.getElementById('oi-table').innerHTML=`<tr><td colspan="5" style="color:var(--loss);text-align:center;padding:30px;">Failed to load data — ${err.message}</td></tr>`;
+  }
+}
+init();
+
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function handleOverlayClick(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = new FormData(form);
+  try {
+    await fetch('/', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: new URLSearchParams(data).toString() });
+  } catch(_) {}
+  document.getElementById('formView').style.display='none';
+  document.getElementById('thankYouView').style.display='block';
+  setTimeout(closeModal, 3000);
+}
+
+</script>
+</body>
+</html>
