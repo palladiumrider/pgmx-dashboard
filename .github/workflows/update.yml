@@ -199,21 +199,35 @@ jobs:
               return pt_spot, cny_usd
 
           def calc_premium(gfex_settle_cny_g, pt_spot_usd_oz, cny_usd):
-              """Convert GFEX settle to USD/oz ex-VAT and compare to spot."""
+              """Convert GFEX settle to USD/oz ex-VAT and compare to
+              loco London spot forward-adjusted to 26 Jun 2026 at -5.5% p.a. (360-day)."""
+              from datetime import date
               if not all([gfex_settle_cny_g, pt_spot_usd_oz, cny_usd]):
-                  return None, None
-              gfex_usd_oz = (gfex_settle_cny_g / TROY_OZ) * cny_usd / (1 / (1 / VAT_FACTOR)) * (1 / VAT_FACTOR) * TROY_OZ
-              # Simplified: CNY/g -> CNY/oz -> USD/oz -> ex-VAT
-              gfex_usd_oz = (gfex_settle_cny_g * TROY_OZ * cny_usd) / VAT_FACTOR / TROY_OZ * TROY_OZ
-              gfex_usd_oz = round((gfex_settle_cny_g / TROY_OZ) * cny_usd / VAT_FACTOR * TROY_OZ, 2)
-              # Clean calculation:
-              # 1. CNY/g -> USD/g: multiply by cny_usd
-              # 2. USD/g -> USD/oz: multiply by TROY_OZ
-              # 3. Remove VAT: divide by VAT_FACTOR
+                  return None, None, None, None
+
+              # Step 1: Convert GFEX settle CNY/g -> USD/oz ex-VAT
+              # CNY/g x CNY/USD x troy_oz / VAT
               gfex_usd_oz = round(gfex_settle_cny_g * cny_usd * TROY_OZ / VAT_FACTOR, 2)
-              premium_usd = round(gfex_usd_oz - pt_spot_usd_oz, 2)
-              premium_pct = round((gfex_usd_oz - pt_spot_usd_oz) / pt_spot_usd_oz * 100, 2)
-              return premium_usd, premium_pct
+
+              # Step 2: Forward-adjust loco London spot to 26 Jun 2026
+              # Using -5.5% p.a. under 360-day count convention
+              forward_date   = date(2026, 6, 26)
+              today          = date.today()
+              days_to_expiry = (forward_date - today).days
+              fwd_adjustment = -0.055  # -5.5% per annum
+              fwd_factor     = 1 + (fwd_adjustment * days_to_expiry / 360)
+              pt_fwd_usd_oz  = round(pt_spot_usd_oz * fwd_factor, 2)
+
+              # Step 3: Premium = GFEX ex-VAT - adjusted forward
+              premium_usd = round(gfex_usd_oz - pt_fwd_usd_oz, 2)
+              premium_pct = round((gfex_usd_oz - pt_fwd_usd_oz) / pt_fwd_usd_oz * 100, 2)
+
+              print(f"  Days to 26-Jun-2026: {days_to_expiry}")
+              print(f"  Fwd factor (-5.5% x {days_to_expiry}/360): {fwd_factor:.6f}")
+              print(f"  Loco London fwd: {pt_fwd_usd_oz} USD/oz")
+              print(f"  GFEX ex-VAT: {gfex_usd_oz} USD/oz")
+
+              return premium_usd, premium_pct, pt_fwd_usd_oz, days_to_expiry
 
           def get_oi_table(conn, commodity, date_today, date_dod, date_wow):
               def get_oi(d):
@@ -272,18 +286,21 @@ jobs:
                   last = cs_pt["data"][-1]
                   gfex_settle = last.get("settle") or last.get("close")
 
-              premium_usd, premium_pct = calc_premium(gfex_settle, pt_spot_usd_oz, cny_usd)
+              premium_usd, premium_pct, pt_fwd_usd_oz, days_to_expiry = calc_premium(gfex_settle, pt_spot_usd_oz, cny_usd) if all([gfex_settle, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
 
               output = {
-                  "generated":      datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-                  "date_today":     date_today,
-                  "date_dod":       date_dod,
-                  "date_wow":       date_wow,
-                  "pt_spot_usd_oz": pt_spot_usd_oz,
-                  "cny_usd_rate":   cny_usd,
+                  "generated":           datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                  "date_today":          date_today,
+                  "date_dod":            date_dod,
+                  "date_wow":            date_wow,
+                  "pt_spot_usd_oz":      pt_spot_usd_oz,
+                  "pt_fwd_usd_oz":       pt_fwd_usd_oz,
+                  "pt_fwd_adjustment":   -5.5,
+                  "pt_fwd_days":         days_to_expiry,
+                  "cny_usd_rate":        cny_usd,
                   "pt_gfex_settle_cny_g": gfex_settle,
-                  "pt_premium_usd_oz":    premium_usd,
-                  "pt_premium_pct":       premium_pct,
+                  "pt_premium_usd_oz":   premium_usd,
+                  "pt_premium_pct":      premium_pct,
               }
               for commodity in ("Platinum", "Palladium"):
                   key = commodity.lower()
@@ -296,6 +313,7 @@ jobs:
               print(f"Saved → {OUTPUT_PATH}")
               print(f"  GFEX settle: {gfex_settle} CNY/g")
               print(f"  PT spot: {pt_spot_usd_oz} USD/oz  CNY/USD: {cny_usd}")
+              print(f"  Loco London fwd (26-Jun-26): {pt_fwd_usd_oz} USD/oz")
               print(f"  Premium: {premium_usd} USD/oz ({premium_pct}%)")
               for commodity in ("Platinum", "Palladium"):
                   cs = output[commodity.lower()]["candlestick"]
