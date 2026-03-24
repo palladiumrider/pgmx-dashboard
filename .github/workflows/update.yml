@@ -273,7 +273,7 @@ jobs:
               dates = [r[0] for r in conn.execute("SELECT DISTINCT date FROM prices ORDER BY date DESC LIMIT 10")]
               if len(dates) < 2:
                   conn.close(); print("No data available yet — skipping export."); exit(0)
-              date_today = dates[0]; date_dod = dates[1]
+              date_today = dates[0]; date_dod = dates[2]
               date_wow   = dates[5] if len(dates) >= 6 else dates[-1]
 
               # Fetch spot prices and FX rates for today, DoD, WoW
@@ -336,8 +336,14 @@ jobs:
                   "pd_fwd_adjustment":     PD_FWD_ADJ * 100,
                   "fwd_days":              days_to_expiry,
                   "pt_spot_usd_oz":        pt_spot_usd_oz,
+                  "pt_spot_dod":           pt_spot_dod,
+                  "pt_spot_wow":           pt_spot_wow,
                   "pt_fwd_usd_oz":         pt_fwd_usd_oz,
+                  "pt_fwd_dod":            pt_fwd_dod,
+                  "pt_fwd_wow":            pt_fwd_wow,
                   "pt_gfex_settle_cny_g":  gfex_settle_pt,
+                  "pt_gfex_settle_dod":    gfex_settle_pt_dod,
+                  "pt_gfex_settle_wow":    gfex_settle_pt_wow,
                   "pt_premium_usd_oz":     pt_prem_usd,
                   "pt_premium_pct":        pt_prem_pct,
                   "pt_premium_usd_oz_dod": pt_prem_usd_dod,
@@ -345,8 +351,14 @@ jobs:
                   "pt_premium_usd_oz_wow": pt_prem_usd_wow,
                   "pt_premium_pct_wow":    pt_prem_pct_wow,
                   "pd_spot_usd_oz":        pd_spot_usd_oz,
+                  "pd_spot_dod":           pd_spot_dod,
+                  "pd_spot_wow":           pd_spot_wow,
                   "pd_fwd_usd_oz":         pd_fwd_usd_oz,
+                  "pd_fwd_dod":            pd_fwd_dod,
+                  "pd_fwd_wow":            pd_fwd_wow,
                   "pd_gfex_settle_cny_g":  gfex_settle_pd,
+                  "pd_gfex_settle_dod":    gfex_settle_pd_dod,
+                  "pd_gfex_settle_wow":    gfex_settle_pd_wow,
                   "pd_premium_usd_oz":     pd_prem_usd,
                   "pd_premium_pct":        pd_prem_pct,
                   "pd_premium_usd_oz_dod": pd_prem_usd_dod,
