@@ -151,45 +151,69 @@ jobs:
           VAT_FACTOR  = 1.13     # 13% Chinese VAT
 
           def fetch_spot():
-              """Fetch platinum spot (USD/oz) and CNY/USD rate at 8am London."""
+              """Fetch platinum spot (USD/oz) and CNY/USD rate at 8am London.
+              Tries multiple free sources in order until one succeeds.
+              """
               pt_spot, cny_usd = None, None
 
-              # Platinum spot via Yahoo Finance (no key, no SSL issues)
-              # XPT=X is the platinum spot ticker on Yahoo Finance
+              # Source 1: stooq.com — plain JSON, no key, no SSL issues
               try:
-                  url = "https://query1.finance.yahoo.com/v8/finance/chart/XPTUSD=X"
-                  headers = {"User-Agent": "Mozilla/5.0"}
-                  r = requests.get(url, headers=headers, timeout=20)
+                  r = requests.get(
+                      "https://stooq.com/q/l/?s=xptusd&f=sd2t2ohlcv&h&e=json",
+                      timeout=20, headers={"User-Agent": "Mozilla/5.0"}
+                  )
                   r.raise_for_status()
                   data = r.json()
-                  meta = data["chart"]["result"][0]["meta"]
-                  pt_spot = float(meta.get("regularMarketPrice") or meta.get("previousClose"))
-                  print(f"  Platinum spot (Yahoo): {pt_spot} USD/oz")
+                  close = data["symbols"][0].get("close")
+                  if close:
+                      pt_spot = float(close)
+                      print(f"  Platinum spot (stooq): {pt_spot} USD/oz")
               except Exception as e:
-                  print(f"  Yahoo Finance failed: {e}")
+                  print(f"  stooq failed: {e}")
 
-              # Fallback: try http (not https) for metals.live
+              # Source 2: Yahoo Finance v7 (different endpoint, more reliable)
               if not pt_spot:
                   try:
-                      r = requests.get("http://api.metals.live/v1/spot", timeout=20,
-                                        headers={"Accept": "application/json"})
+                      r = requests.get(
+                          "https://query2.finance.yahoo.com/v7/finance/quote?symbols=XPTUSD%3DX",
+                          timeout=20,
+                          headers={"User-Agent": "Mozilla/5.0 (compatible)"}
+                      )
+                      r.raise_for_status()
+                      data = r.json()
+                      result = data["quoteResponse"]["result"][0]
+                      pt_spot = float(result.get("regularMarketPrice") or result.get("ask"))
+                      print(f"  Platinum spot (Yahoo v7): {pt_spot} USD/oz")
+                  except Exception as e:
+                      print(f"  Yahoo v7 failed: {e}")
+
+              # Source 3: metals.live over plain http (avoids SSL issue)
+              if not pt_spot:
+                  try:
+                      r = requests.get(
+                          "http://api.metals.live/v1/spot",
+                          timeout=20, headers={"Accept": "application/json"}
+                      )
                       r.raise_for_status()
                       data = r.json()
                       if isinstance(data, list):
                           for item in data:
-                              if str(item.get("metal","")).lower() in ("platinum","xpt"):
-                                  pt_spot = float(item.get("price",0))
+                              if str(item.get("metal","")).lower() in ("platinum","xpt","pt"):
+                                  pt_spot = float(item.get("price", 0)) or None
                                   break
-                      print(f"  Platinum spot (metals.live http): {pt_spot} USD/oz")
+                      print(f"  Platinum spot (metals.live): {pt_spot} USD/oz")
                   except Exception as e:
-                      print(f"  metals.live http failed: {e}")
+                      print(f"  metals.live failed: {e}")
 
               if not pt_spot:
-                  print("  WARNING: could not fetch platinum spot price")
+                  print("  WARNING: all platinum spot sources failed")
 
-              # CNY/USD via Frankfurter (reliable, no key)
+              # CNY/USD via Frankfurter — confirmed working
               try:
-                  r = requests.get("https://api.frankfurter.dev/v1/latest?base=CNY&symbols=USD", timeout=15)
+                  r = requests.get(
+                      "https://api.frankfurter.dev/v1/latest?base=CNY&symbols=USD",
+                      timeout=15
+                  )
                   r.raise_for_status()
                   data = r.json()
                   cny_usd = float(data["rates"]["USD"])
