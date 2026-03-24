@@ -151,6 +151,12 @@ jobs:
           OUTPUT_PATH = Path("data/pgmx-data.json")
           TROY_OZ     = 31.1035  # grams per troy oz
           VAT_FACTOR  = 1.13     # 13% Chinese VAT
+          FWD_DATE    = "2026-06-26"   # delivery date for both contracts
+
+          # ── FORWARD ADJUSTMENTS ── edit these when mids change ──────────────
+          PT_FWD_ADJ  = -0.055   # platinum: -5.5% p.a.
+          PD_FWD_ADJ  = -0.005   # palladium: -0.5% p.a.
+          # ────────────────────────────────────────────────────────────────────
 
           def fetch_spot():
               """Fetch platinum spot (USD/oz) and CNY/USD rate at 8am London."""
@@ -198,36 +204,32 @@ jobs:
 
               return pt_spot, cny_usd
 
-          def calc_premium(gfex_settle_cny_g, pt_spot_usd_oz, cny_usd):
+          def calc_premium(gfex_settle_cny_g, spot_usd_oz, cny_usd, fwd_adj):
               """Convert GFEX settle to USD/oz ex-VAT and compare to
-              loco London spot forward-adjusted to 26 Jun 2026 at -5.5% p.a. (360-day)."""
-              from datetime import date
-              if not all([gfex_settle_cny_g, pt_spot_usd_oz, cny_usd]):
+              loco London spot forward-adjusted to FWD_DATE using fwd_adj p.a. (360-day)."""
+              from datetime import date as date_cls
+              if not all([gfex_settle_cny_g, spot_usd_oz, cny_usd]):
                   return None, None, None, None
 
               # Step 1: Convert GFEX settle CNY/g -> USD/oz ex-VAT
-              # CNY/g x CNY/USD x troy_oz / VAT
               gfex_usd_oz = round(gfex_settle_cny_g * cny_usd * TROY_OZ / VAT_FACTOR, 2)
 
-              # Step 2: Forward-adjust loco London spot to 26 Jun 2026
-              # Using -5.5% p.a. under 360-day count convention
-              forward_date   = date(2026, 6, 26)
-              today          = date.today()
+              # Step 2: Forward-adjust loco London spot to FWD_DATE
+              fwd_date_parts = [int(x) for x in FWD_DATE.split("-")]
+              forward_date   = date_cls(*fwd_date_parts)
+              today          = date_cls.today()
               days_to_expiry = (forward_date - today).days
-              fwd_adjustment = -0.055  # -5.5% per annum
-              fwd_factor     = 1 + (fwd_adjustment * days_to_expiry / 360)
-              pt_fwd_usd_oz  = round(pt_spot_usd_oz * fwd_factor, 2)
+              fwd_factor     = 1 + (fwd_adj * days_to_expiry / 360)
+              fwd_usd_oz     = round(spot_usd_oz * fwd_factor, 2)
 
               # Step 3: Premium = GFEX ex-VAT - adjusted forward
-              premium_usd = round(gfex_usd_oz - pt_fwd_usd_oz, 2)
-              premium_pct = round((gfex_usd_oz - pt_fwd_usd_oz) / pt_fwd_usd_oz * 100, 2)
+              premium_usd = round(gfex_usd_oz - fwd_usd_oz, 2)
+              premium_pct = round((gfex_usd_oz - fwd_usd_oz) / fwd_usd_oz * 100, 2)
 
-              print(f"  Days to 26-Jun-2026: {days_to_expiry}")
-              print(f"  Fwd factor (-5.5% x {days_to_expiry}/360): {fwd_factor:.6f}")
-              print(f"  Loco London fwd: {pt_fwd_usd_oz} USD/oz")
-              print(f"  GFEX ex-VAT: {gfex_usd_oz} USD/oz")
+              print(f"  Days to {FWD_DATE}: {days_to_expiry} | fwd adj: {fwd_adj*100:.1f}% p.a. | factor: {fwd_factor:.6f}")
+              print(f"  Spot: {spot_usd_oz} | Fwd: {fwd_usd_oz} | GFEX ex-VAT: {gfex_usd_oz} | Premium: {premium_usd} ({premium_pct}%)")
 
-              return premium_usd, premium_pct, pt_fwd_usd_oz, days_to_expiry
+              return premium_usd, premium_pct, fwd_usd_oz, days_to_expiry
 
           def get_oi_table(conn, commodity, date_today, date_dod, date_wow):
               def get_oi(d):
@@ -279,28 +281,66 @@ jobs:
               print("Fetching spot prices...")
               pt_spot_usd_oz, cny_usd = fetch_spot()
 
-              # Get GFEX front month settle for premium calc
+              # Get GFEX front month settles for premium calc
               cs_pt = get_candlestick(conn, "Platinum")
-              gfex_settle = None
+              cs_pd = get_candlestick(conn, "Palladium")
+              gfex_settle_pt = None
+              gfex_settle_pd = None
               if cs_pt and cs_pt["data"]:
                   last = cs_pt["data"][-1]
-                  gfex_settle = last.get("settle") or last.get("close")
+                  gfex_settle_pt = last.get("settle") or last.get("close")
+              if cs_pd and cs_pd["data"]:
+                  last = cs_pd["data"][-1]
+                  gfex_settle_pd = last.get("settle") or last.get("close")
 
-              premium_usd, premium_pct, pt_fwd_usd_oz, days_to_expiry = calc_premium(gfex_settle, pt_spot_usd_oz, cny_usd) if all([gfex_settle, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
+              premium_usd, premium_pct, pt_fwd_usd_oz, days_to_expiry = calc_premium(gfex_settle_pt, pt_spot_usd_oz, cny_usd, PT_FWD_ADJ) if all([gfex_settle_pt, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
+
+              # Palladium spot via Yahoo Finance (XPDUSD=X)
+              pd_spot_usd_oz = None
+              try:
+                  r = requests.get(
+                      "https://query1.finance.yahoo.com/v8/finance/chart/XPDUSD=X",
+                      headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+                  r.raise_for_status()
+                  meta = r.json()["chart"]["result"][0]["meta"]
+                  pd_spot_usd_oz = float(meta.get("regularMarketPrice") or meta.get("previousClose"))
+                  print(f"  Palladium spot (Yahoo): {pd_spot_usd_oz} USD/oz")
+              except Exception as e:
+                  print(f"  Palladium spot failed: {e}")
+              # Fallback: use metalpriceapi for palladium too
+              if not pd_spot_usd_oz and api_key:
+                  try:
+                      r = requests.get(f"https://api.metalpriceapi.com/v1/latest?api_key={api_key}&base=USD&currencies=XPD", timeout=20)
+                      r.raise_for_status()
+                      data = r.json()
+                      if data.get("success"):
+                          xpd = data["rates"].get("XPD")
+                          if xpd: pd_spot_usd_oz = round(1.0 / float(xpd), 2)
+                          print(f"  Palladium spot (metalpriceapi): {pd_spot_usd_oz} USD/oz")
+                  except Exception as e:
+                      print(f"  Palladium spot metalpriceapi failed: {e}")
+
+              pd_premium_usd, pd_premium_pct, pd_fwd_usd_oz, _ = calc_premium(gfex_settle_pd, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ) if all([gfex_settle_pd, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
 
               output = {
-                  "generated":           datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-                  "date_today":          date_today,
-                  "date_dod":            date_dod,
-                  "date_wow":            date_wow,
-                  "pt_spot_usd_oz":      pt_spot_usd_oz,
-                  "pt_fwd_usd_oz":       pt_fwd_usd_oz,
-                  "pt_fwd_adjustment":   -5.5,
-                  "pt_fwd_days":         days_to_expiry,
-                  "cny_usd_rate":        cny_usd,
-                  "pt_gfex_settle_cny_g": gfex_settle,
-                  "pt_premium_usd_oz":   premium_usd,
-                  "pt_premium_pct":      premium_pct,
+                  "generated":            datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                  "date_today":           date_today,
+                  "date_dod":             date_dod,
+                  "date_wow":             date_wow,
+                  "cny_usd_rate":         cny_usd,
+                  "pt_fwd_adjustment":    PT_FWD_ADJ * 100,
+                  "pd_fwd_adjustment":    PD_FWD_ADJ * 100,
+                  "fwd_days":             days_to_expiry,
+                  "pt_spot_usd_oz":       pt_spot_usd_oz,
+                  "pt_fwd_usd_oz":        pt_fwd_usd_oz,
+                  "pt_gfex_settle_cny_g": gfex_settle_pt,
+                  "pt_premium_usd_oz":    premium_usd,
+                  "pt_premium_pct":       premium_pct,
+                  "pd_spot_usd_oz":       pd_spot_usd_oz,
+                  "pd_fwd_usd_oz":        pd_fwd_usd_oz,
+                  "pd_gfex_settle_cny_g": gfex_settle_pd,
+                  "pd_premium_usd_oz":    pd_premium_usd,
+                  "pd_premium_pct":       pd_premium_pct,
               }
               for commodity in ("Platinum", "Palladium"):
                   key = commodity.lower()
@@ -311,10 +351,10 @@ jobs:
               with open(OUTPUT_PATH, "w") as f:
                   json.dump(output, f, indent=2)
               print(f"Saved → {OUTPUT_PATH}")
-              print(f"  GFEX settle: {gfex_settle} CNY/g")
+              print(f"  PT settle: {gfex_settle_pt} CNY/g | PD settle: {gfex_settle_pd} CNY/g")
               print(f"  PT spot: {pt_spot_usd_oz} USD/oz  CNY/USD: {cny_usd}")
-              print(f"  Loco London fwd (26-Jun-26): {pt_fwd_usd_oz} USD/oz")
-              print(f"  Premium: {premium_usd} USD/oz ({premium_pct}%)")
+              print(f"  PT fwd: {pt_fwd_usd_oz} USD/oz | PT premium: {premium_usd} USD/oz ({premium_pct}%)")
+              print(f"  PD fwd: {pd_fwd_usd_oz} USD/oz | PD premium: {pd_premium_usd} USD/oz ({pd_premium_pct}%)")
               for commodity in ("Platinum", "Palladium"):
                   cs = output[commodity.lower()]["candlestick"]
                   oi = output[commodity.lower()]["oi_table"]
