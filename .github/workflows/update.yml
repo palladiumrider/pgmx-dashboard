@@ -313,7 +313,6 @@ jobs:
               pd_spot_usd_oz = pd_spot_usd_oz_today
 
               pd_prem_usd, pd_prem_pct, pd_fwd_usd_oz, _ = calc_premium(gfex_settle_pd, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ) if all([gfex_settle_pd, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
-              print(f"  Today: PT={pt_prem_pct}% PD={pd_prem_pct}% | DoD: PT={pt_prem_pct_dod}% PD={pd_prem_pct_dod}% | WoW: PT={pt_prem_pct_wow}% PD={pd_prem_pct_wow}%")
 
               # DoD premiums — yesterday GFEX settle + yesterday spot + yesterday CNY/USD
               pt_prem_usd_dod, pt_prem_pct_dod, pt_fwd_dod, _ = calc_premium(gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod, PT_FWD_ADJ) if all([gfex_settle_pt_dod, pt_spot_dod, cny_usd_dod]) else (None, None, None, None)
@@ -322,6 +321,7 @@ jobs:
               # WoW premiums — last week GFEX settle + last week spot + last week CNY/USD
               pt_prem_usd_wow, pt_prem_pct_wow, pt_fwd_wow, _ = calc_premium(gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow, PT_FWD_ADJ) if all([gfex_settle_pt_wow, pt_spot_wow, cny_usd_wow]) else (None, None, None, None)
               pd_prem_usd_wow, pd_prem_pct_wow, pd_fwd_wow, _ = calc_premium(gfex_settle_pd_wow, pd_spot_wow, cny_usd_wow, PD_FWD_ADJ) if all([gfex_settle_pd_wow, pd_spot_wow, cny_usd_wow]) else (None, None, None, None)
+              print(f"  Today: PT={pt_prem_pct}% PD={pd_prem_pct}% | DoD: PT={pt_prem_pct_dod}% PD={pd_prem_pct_dod}% | WoW: PT={pt_prem_pct_wow}% PD={pd_prem_pct_wow}%")
 
               usd_cny = round(1.0 / cny_usd, 4) if cny_usd else None
 
