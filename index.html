@@ -548,21 +548,21 @@ function populateStats(data, commodity='platinum') {
   document.getElementById('generated-ts').textContent=data.generated;
 
   // ── PREMIUM BANNER ──────────────────────────────────────────────────────────
-  const ptSettle   = data.pt_gfex_settle_cny_g;
-  const ptSpot     = data.pt_spot_usd_oz;
-  const cnyUsd     = data.cny_usd_rate;
-  const premUsd    = data.pt_premium_usd_oz;
-  const premPct    = data.pt_premium_pct;
+  const bannerSettle = data.pt_gfex_settle_cny_g;
+  const bannerSpot   = data.pt_spot_usd_oz;
+  const bannerCnyUsd = data.cny_usd_rate;
+  const premUsd      = data.pt_premium_usd_oz;
+  const premPct      = data.pt_premium_pct;
 
-  if (ptSettle) {
-    document.getElementById('prem-gfex-settle').textContent = ptSettle.toFixed(2) + ' CNY/g';
-    const exVat = ptSettle && cnyUsd ? (ptSettle * 31.1035 * cnyUsd / 1.13).toFixed(2) : '—';
+  if (bannerSettle) {
+    document.getElementById('prem-gfex-settle').textContent = bannerSettle.toFixed(2) + ' CNY/g';
+    const exVat = bannerSettle && bannerCnyUsd ? (bannerSettle * 31.1035 * bannerCnyUsd / 1.13).toFixed(2) : '—';
     document.getElementById('prem-gfex-usd').textContent = exVat ? '$' + exVat : '—';
   }
-  if (ptSpot) {
-    document.getElementById('prem-spot').textContent = '$' + ptSpot.toFixed(2);
+  if (bannerSpot) {
+    document.getElementById('prem-spot').textContent = '$' + bannerSpot.toFixed(2);
     document.getElementById('prem-spot-sub').textContent =
-      'USD/oz · CNY/USD: ' + (cnyUsd ? cnyUsd.toFixed(4) : '—');
+      'USD/oz · CNY/USD: ' + (bannerCnyUsd ? bannerCnyUsd.toFixed(4) : '—');
   }
   if (premUsd != null && premPct != null) {
     const isPrem   = premUsd > 0;
