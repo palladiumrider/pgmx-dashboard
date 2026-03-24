@@ -142,7 +142,7 @@ jobs:
           Export OI table, candlestick data, platinum spot and CNY/USD rate
           to data/pgmx-data.json for the PGMx dashboard.
           """
-          import json, sqlite3, requests, warnings
+          import json, sqlite3, requests, warnings, os
           from datetime import datetime
           from pathlib import Path
           warnings.filterwarnings("ignore")
@@ -281,35 +281,34 @@ jobs:
               print("Fetching spot prices...")
               pt_spot_usd_oz, cny_usd = fetch_spot()
 
-              # Get GFEX front month settles for premium calc
+              # Get GFEX settles for today, DoD, WoW
+              def get_settle(cs_data, date_str):
+                  """Get settle price for a specific date from candlestick data."""
+                  if not cs_data: return None
+                  for row in reversed(cs_data):
+                      if row["date"] <= date_str:
+                          return row.get("settle") or row.get("close")
+                  return None
+
               cs_pt = get_candlestick(conn, "Platinum")
               cs_pd = get_candlestick(conn, "Palladium")
-              gfex_settle_pt = None
-              gfex_settle_pd = None
-              if cs_pt and cs_pt["data"]:
-                  last = cs_pt["data"][-1]
-                  gfex_settle_pt = last.get("settle") or last.get("close")
-              if cs_pd and cs_pd["data"]:
-                  last = cs_pd["data"][-1]
-                  gfex_settle_pd = last.get("settle") or last.get("close")
+              pt_data = cs_pt["data"] if cs_pt else []
+              pd_data = cs_pd["data"] if cs_pd else []
 
-              premium_usd, premium_pct, pt_fwd_usd_oz, days_to_expiry = calc_premium(gfex_settle_pt, pt_spot_usd_oz, cny_usd, PT_FWD_ADJ) if all([gfex_settle_pt, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
+              gfex_settle_pt     = get_settle(pt_data, date_today)
+              gfex_settle_pt_dod = get_settle(pt_data, date_dod)
+              gfex_settle_pt_wow = get_settle(pt_data, date_wow)
+              gfex_settle_pd     = get_settle(pd_data, date_today)
+              gfex_settle_pd_dod = get_settle(pd_data, date_dod)
+              gfex_settle_pd_wow = get_settle(pd_data, date_wow)
 
-              # Palladium spot via Yahoo Finance (XPDUSD=X)
+              # Today premiums
+              pt_prem_usd, pt_prem_pct, pt_fwd_usd_oz, days_to_expiry = calc_premium(gfex_settle_pt, pt_spot_usd_oz, cny_usd, PT_FWD_ADJ) if all([gfex_settle_pt, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
+
+              # Palladium spot via metalpriceapi (Yahoo blocks servers)
               pd_spot_usd_oz = None
-              try:
-                  r = requests.get(
-                      "https://query1.finance.yahoo.com/v8/finance/chart/XPDUSD=X",
-                      headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
-                  r.raise_for_status()
-                  meta = r.json()["chart"]["result"][0]["meta"]
-                  pd_spot_usd_oz = float(meta.get("regularMarketPrice") or meta.get("previousClose"))
-                  print(f"  Palladium spot (Yahoo): {pd_spot_usd_oz} USD/oz")
-              except Exception as e:
-                  print(f"  Palladium spot failed: {e}")
-              # Fallback: use metalpriceapi for palladium too
               api_key_main = os.environ.get("METALS_API_KEY", "")
-              if not pd_spot_usd_oz and api_key_main:
+              if api_key_main:
                   try:
                       r = requests.get(f"https://api.metalpriceapi.com/v1/latest?api_key={api_key_main}&base=USD&currencies=XPD", timeout=20)
                       r.raise_for_status()
@@ -319,29 +318,48 @@ jobs:
                           if xpd: pd_spot_usd_oz = round(1.0 / float(xpd), 2)
                           print(f"  Palladium spot (metalpriceapi): {pd_spot_usd_oz} USD/oz")
                   except Exception as e:
-                      print(f"  Palladium spot metalpriceapi failed: {e}")
+                      print(f"  Palladium spot failed: {e}")
 
-              pd_premium_usd, pd_premium_pct, pd_fwd_usd_oz, _ = calc_premium(gfex_settle_pd, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ) if all([gfex_settle_pd, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
+              pd_prem_usd, pd_prem_pct, pd_fwd_usd_oz, _ = calc_premium(gfex_settle_pd, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ) if all([gfex_settle_pd, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
+
+              # DoD premiums — use same spot (best approximation for yesterday)
+              pt_prem_usd_dod, pt_prem_pct_dod, pt_fwd_dod, _ = calc_premium(gfex_settle_pt_dod, pt_spot_usd_oz, cny_usd, PT_FWD_ADJ) if all([gfex_settle_pt_dod, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
+              pd_prem_usd_dod, pd_prem_pct_dod, pd_fwd_dod, _ = calc_premium(gfex_settle_pd_dod, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ) if all([gfex_settle_pd_dod, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
+
+              # WoW premiums — use same spot
+              pt_prem_usd_wow, pt_prem_pct_wow, pt_fwd_wow, _ = calc_premium(gfex_settle_pt_wow, pt_spot_usd_oz, cny_usd, PT_FWD_ADJ) if all([gfex_settle_pt_wow, pt_spot_usd_oz, cny_usd]) else (None, None, None, None)
+              pd_prem_usd_wow, pd_prem_pct_wow, pd_fwd_wow, _ = calc_premium(gfex_settle_pd_wow, pd_spot_usd_oz, cny_usd, PD_FWD_ADJ) if all([gfex_settle_pd_wow, pd_spot_usd_oz, cny_usd]) else (None, None, None, None)
+
+              usd_cny = round(1.0 / cny_usd, 4) if cny_usd else None
 
               output = {
-                  "generated":            datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-                  "date_today":           date_today,
-                  "date_dod":             date_dod,
-                  "date_wow":             date_wow,
-                  "cny_usd_rate":         cny_usd,
-                  "pt_fwd_adjustment":    PT_FWD_ADJ * 100,
-                  "pd_fwd_adjustment":    PD_FWD_ADJ * 100,
-                  "fwd_days":             days_to_expiry,
-                  "pt_spot_usd_oz":       pt_spot_usd_oz,
-                  "pt_fwd_usd_oz":        pt_fwd_usd_oz,
-                  "pt_gfex_settle_cny_g": gfex_settle_pt,
-                  "pt_premium_usd_oz":    premium_usd,
-                  "pt_premium_pct":       premium_pct,
-                  "pd_spot_usd_oz":       pd_spot_usd_oz,
-                  "pd_fwd_usd_oz":        pd_fwd_usd_oz,
-                  "pd_gfex_settle_cny_g": gfex_settle_pd,
-                  "pd_premium_usd_oz":    pd_premium_usd,
-                  "pd_premium_pct":       pd_premium_pct,
+                  "generated":             datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                  "date_today":            date_today,
+                  "date_dod":              date_dod,
+                  "date_wow":              date_wow,
+                  "cny_usd_rate":          cny_usd,
+                  "usd_cny_rate":          usd_cny,
+                  "pt_fwd_adjustment":     PT_FWD_ADJ * 100,
+                  "pd_fwd_adjustment":     PD_FWD_ADJ * 100,
+                  "fwd_days":              days_to_expiry,
+                  "pt_spot_usd_oz":        pt_spot_usd_oz,
+                  "pt_fwd_usd_oz":         pt_fwd_usd_oz,
+                  "pt_gfex_settle_cny_g":  gfex_settle_pt,
+                  "pt_premium_usd_oz":     pt_prem_usd,
+                  "pt_premium_pct":        pt_prem_pct,
+                  "pt_premium_usd_oz_dod": pt_prem_usd_dod,
+                  "pt_premium_pct_dod":    pt_prem_pct_dod,
+                  "pt_premium_usd_oz_wow": pt_prem_usd_wow,
+                  "pt_premium_pct_wow":    pt_prem_pct_wow,
+                  "pd_spot_usd_oz":        pd_spot_usd_oz,
+                  "pd_fwd_usd_oz":         pd_fwd_usd_oz,
+                  "pd_gfex_settle_cny_g":  gfex_settle_pd,
+                  "pd_premium_usd_oz":     pd_prem_usd,
+                  "pd_premium_pct":        pd_prem_pct,
+                  "pd_premium_usd_oz_dod": pd_prem_usd_dod,
+                  "pd_premium_pct_dod":    pd_prem_pct_dod,
+                  "pd_premium_usd_oz_wow": pd_prem_usd_wow,
+                  "pd_premium_pct_wow":    pd_prem_pct_wow,
               }
               for commodity in ("Platinum", "Palladium"):
                   key = commodity.lower()
@@ -352,10 +370,10 @@ jobs:
               with open(OUTPUT_PATH, "w") as f:
                   json.dump(output, f, indent=2)
               print(f"Saved → {OUTPUT_PATH}")
-              print(f"  PT settle: {gfex_settle_pt} CNY/g | PD settle: {gfex_settle_pd} CNY/g")
-              print(f"  PT spot: {pt_spot_usd_oz} USD/oz  CNY/USD: {cny_usd}")
-              print(f"  PT fwd: {pt_fwd_usd_oz} USD/oz | PT premium: {premium_usd} USD/oz ({premium_pct}%)")
-              print(f"  PD fwd: {pd_fwd_usd_oz} USD/oz | PD premium: {pd_premium_usd} USD/oz ({pd_premium_pct}%)")
+              print(f"  PT settle today/dod/wow: {gfex_settle_pt}/{gfex_settle_pt_dod}/{gfex_settle_pt_wow}")
+              print(f"  PT premium today/dod/wow: {pt_prem_pct}%/{pt_prem_pct_dod}%/{pt_prem_pct_wow}%")
+              print(f"  PD settle today/dod/wow: {gfex_settle_pd}/{gfex_settle_pd_dod}/{gfex_settle_pd_wow}")
+              print(f"  PD premium today/dod/wow: {pd_prem_pct}%/{pd_prem_pct_dod}%/{pd_prem_pct_wow}%")
               for commodity in ("Platinum", "Palladium"):
                   cs = output[commodity.lower()]["candlestick"]
                   oi = output[commodity.lower()]["oi_table"]
