@@ -1,8 +1,13 @@
 {
-  "generated": "2026-03-24T11:00:17",
+  "generated": "2026-03-24T12:01:12",
   "date_today": "2026-03-24",
   "date_dod": "2026-03-23",
   "date_wow": "2026-03-17",
+  "pt_spot_usd_oz": null,
+  "cny_usd_rate": 0.1451,
+  "pt_gfex_settle_cny_g": 478.9,
+  "pt_premium_usd_oz": null,
+  "pt_premium_pct": null,
   "platinum": {
     "candlestick": {
       "contract": "pt2606",
@@ -436,6 +441,26 @@
           "settle": 700.5,
           "volume": 19086,
           "oi": 28875
+        },
+        {
+          "date": "2026-01-29",
+          "open": 710.0,
+          "high": 733.85,
+          "low": 697.65,
+          "close": 714.1,
+          "settle": 714.85,
+          "volume": 27692,
+          "oi": 29335
+        },
+        {
+          "date": "2026-01-30",
+          "open": 696.2,
+          "high": 701.95,
+          "low": 616.2,
+          "close": 630.55,
+          "settle": 657.3,
+          "volume": 40153,
+          "oi": 26982
         },
         {
           "date": "2026-02-02",
@@ -1215,6 +1240,26 @@
           "settle": 511.5,
           "volume": 13268,
           "oi": 11904
+        },
+        {
+          "date": "2026-01-29",
+          "open": 524.0,
+          "high": 545.5,
+          "low": 510.95,
+          "close": 526.6,
+          "settle": 526.55,
+          "volume": 16911,
+          "oi": 11135
+        },
+        {
+          "date": "2026-01-30",
+          "open": 511.25,
+          "high": 522.0,
+          "low": 455.35,
+          "close": 464.05,
+          "settle": 492.5,
+          "volume": 19151,
+          "oi": 10574
         },
         {
           "date": "2026-02-02",
