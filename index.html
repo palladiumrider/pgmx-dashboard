@@ -278,17 +278,28 @@ async function handleSubmit(e) {
 
     <!-- Platinum gauge -->
     <div class="gauge-card pt-card">
-      <svg class="gauge-svg" id="pt-gauge-svg" width="110" height="110" viewBox="0 0 110 110">
-        <circle cx="55" cy="55" r="44" fill="none" stroke="#1a2035" stroke-width="8"/>
-        <circle cx="55" cy="55" r="44" fill="none" stroke="#1a2035" stroke-width="8"
-          stroke-dasharray="207 69" stroke-dashoffset="52" stroke-linecap="round"/>
-        <circle id="pt-arc" cx="55" cy="55" r="44" fill="none" stroke="#00c8ff" stroke-width="8"
-          stroke-dasharray="0 276" stroke-dashoffset="52" stroke-linecap="round"
+      <svg class="gauge-svg" id="pt-gauge-svg" width="130" height="130" viewBox="0 0 130 130"
+           style="cursor:pointer" onclick="toggleGaugeMode('pt')" title="Click to toggle % / USD">
+        <!-- Track rings -->
+        <circle cx="65" cy="65" r="56" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="263 87" stroke-dashoffset="61" stroke-linecap="round"/>
+        <circle cx="65" cy="65" r="44" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="207 69" stroke-dashoffset="48" stroke-linecap="round"/>
+        <circle cx="65" cy="65" r="32" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="151 51" stroke-dashoffset="35" stroke-linecap="round"/>
+        <!-- Outer arc = WoW -->
+        <circle id="pt-arc-wow" cx="65" cy="65" r="56" fill="none" stroke="#4a5580" stroke-width="6"
+          stroke-dasharray="0 350" stroke-dashoffset="61" stroke-linecap="round"
+          style="transition:stroke-dasharray 1.2s ease,stroke 0.4s"/>
+        <!-- Middle arc = DoD -->
+        <circle id="pt-arc-dod" cx="65" cy="65" r="44" fill="none" stroke="#4a5580" stroke-width="6"
+          stroke-dasharray="0 276" stroke-dashoffset="48" stroke-linecap="round"
           style="transition:stroke-dasharray 1s ease,stroke 0.4s"/>
-        <text id="pt-gauge-pct" x="55" y="50" text-anchor="middle" dominant-baseline="central"
-          style="font-family:'Bebas Neue',sans-serif;font-size:18px;fill:#dde8ff">—</text>
-        <text x="55" y="68" text-anchor="middle" dominant-baseline="central"
-          style="font-family:'DM Mono',monospace;font-size:8px;fill:#4a5580;letter-spacing:0.1em">PREMIUM</text>
+        <!-- Inner arc = Today -->
+        <circle id="pt-arc" cx="65" cy="65" r="32" fill="none" stroke="#00c8ff" stroke-width="6"
+          stroke-dasharray="0 201" stroke-dashoffset="35" stroke-linecap="round"
+          style="transition:stroke-dasharray 0.8s ease,stroke 0.4s"/>
+        <text id="pt-gauge-pct" x="65" y="60" text-anchor="middle" dominant-baseline="central"
+          style="font-family:'Bebas Neue',sans-serif;font-size:16px;fill:#dde8ff">—</text>
+        <text id="pt-gauge-label" x="65" y="76" text-anchor="middle" dominant-baseline="central"
+          style="font-family:'DM Mono',monospace;font-size:7px;fill:#4a5580;letter-spacing:0.1em">TODAY</text>
       </svg>
       <div class="gauge-info">
         <div class="gauge-metal">PLATINUM · PT2606</div>
@@ -296,24 +307,40 @@ async function handleSubmit(e) {
         <div class="gauge-word neu" id="pt-prem-word">vs Loco London Fwd</div>
         <div class="gauge-row"><span>GFEX settle</span><span id="pt-settle-val">—</span></div>
         <div class="gauge-row"><span>Loco London fwd</span><span id="pt-fwd-val">—</span></div>
-        <div class="gauge-row"><span>CNY/USD</span><span id="pt-cny-val">—</span></div>
+        <div class="gauge-row"><span>USD/CNY</span><span id="pt-cny-val">—</span></div>
+        <div class="gauge-row" style="margin-top:6px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#00c8ff;display:inline-block;border-radius:2px"></span>Today</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#4a5580;display:inline-block;border-radius:2px"></span>DoD</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#2a3555;display:inline-block;border-radius:2px"></span>WoW</span>
+        </div>
         <div class="gauge-note" id="pt-gauge-note">fwd adj — p.a. · — days · 26 Jun 2026</div>
       </div>
     </div>
 
     <!-- Palladium gauge -->
     <div class="gauge-card pd-card">
-      <svg class="gauge-svg" id="pd-gauge-svg" width="110" height="110" viewBox="0 0 110 110">
-        <circle cx="55" cy="55" r="44" fill="none" stroke="#1a2035" stroke-width="8"/>
-        <circle cx="55" cy="55" r="44" fill="none" stroke="#1a2035" stroke-width="8"
-          stroke-dasharray="207 69" stroke-dashoffset="52" stroke-linecap="round"/>
-        <circle id="pd-arc" cx="55" cy="55" r="44" fill="none" stroke="#ff8c00" stroke-width="8"
-          stroke-dasharray="0 276" stroke-dashoffset="52" stroke-linecap="round"
+      <svg class="gauge-svg" id="pd-gauge-svg" width="130" height="130" viewBox="0 0 130 130"
+           style="cursor:pointer" onclick="toggleGaugeMode('pd')" title="Click to toggle % / USD">
+        <!-- Track rings -->
+        <circle cx="65" cy="65" r="56" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="263 87" stroke-dashoffset="61" stroke-linecap="round"/>
+        <circle cx="65" cy="65" r="44" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="207 69" stroke-dashoffset="48" stroke-linecap="round"/>
+        <circle cx="65" cy="65" r="32" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="151 51" stroke-dashoffset="35" stroke-linecap="round"/>
+        <!-- Outer arc = WoW -->
+        <circle id="pd-arc-wow" cx="65" cy="65" r="56" fill="none" stroke="#4a5580" stroke-width="6"
+          stroke-dasharray="0 350" stroke-dashoffset="61" stroke-linecap="round"
+          style="transition:stroke-dasharray 1.2s ease,stroke 0.4s"/>
+        <!-- Middle arc = DoD -->
+        <circle id="pd-arc-dod" cx="65" cy="65" r="44" fill="none" stroke="#4a5580" stroke-width="6"
+          stroke-dasharray="0 276" stroke-dashoffset="48" stroke-linecap="round"
           style="transition:stroke-dasharray 1s ease,stroke 0.4s"/>
-        <text id="pd-gauge-pct" x="55" y="50" text-anchor="middle" dominant-baseline="central"
-          style="font-family:'Bebas Neue',sans-serif;font-size:18px;fill:#dde8ff">—</text>
-        <text x="55" y="68" text-anchor="middle" dominant-baseline="central"
-          style="font-family:'DM Mono',monospace;font-size:8px;fill:#4a5580;letter-spacing:0.1em">PREMIUM</text>
+        <!-- Inner arc = Today -->
+        <circle id="pd-arc" cx="65" cy="65" r="32" fill="none" stroke="#ff8c00" stroke-width="6"
+          stroke-dasharray="0 201" stroke-dashoffset="35" stroke-linecap="round"
+          style="transition:stroke-dasharray 0.8s ease,stroke 0.4s"/>
+        <text id="pd-gauge-pct" x="65" y="60" text-anchor="middle" dominant-baseline="central"
+          style="font-family:'Bebas Neue',sans-serif;font-size:16px;fill:#dde8ff">—</text>
+        <text id="pd-gauge-label" x="65" y="76" text-anchor="middle" dominant-baseline="central"
+          style="font-family:'DM Mono',monospace;font-size:7px;fill:#4a5580;letter-spacing:0.1em">TODAY</text>
       </svg>
       <div class="gauge-info">
         <div class="gauge-metal">PALLADIUM · PD2606</div>
@@ -321,7 +348,12 @@ async function handleSubmit(e) {
         <div class="gauge-word neu" id="pd-prem-word">vs Loco London Fwd</div>
         <div class="gauge-row"><span>GFEX settle</span><span id="pd-settle-val">—</span></div>
         <div class="gauge-row"><span>Loco London fwd</span><span id="pd-fwd-val">—</span></div>
-        <div class="gauge-row"><span>CNY/USD</span><span id="pd-cny-val">—</span></div>
+        <div class="gauge-row"><span>USD/CNY</span><span id="pd-cny-val">—</span></div>
+        <div class="gauge-row" style="margin-top:6px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#ff8c00;display:inline-block;border-radius:2px"></span>Today</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#4a5580;display:inline-block;border-radius:2px"></span>DoD</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#2a3555;display:inline-block;border-radius:2px"></span>WoW</span>
+        </div>
         <div class="gauge-note" id="pd-gauge-note">fwd adj — p.a. · — days · 26 Jun 2026</div>
       </div>
     </div>
@@ -589,56 +621,108 @@ function populateStats(data, commodity='platinum') {
   document.getElementById('generated-ts').textContent=data.generated;
 
   // ── GAUGE BANNER ────────────────────────────────────────────────────────────
-  function fillGauge(metal, premPct, premUsd, settle, fwd, cnyUsd, fwdAdj, fwdDays) {
-    const isUp   = premPct > 0;
-    const isDown = premPct < 0;
-    const colUp  = '#00ff88', colDown = '#ff2d78', colNeu = '#4a5580';
-    const color  = isUp ? colUp : isDown ? colDown : colNeu;
+  const gaugeMode = { pt: 'pct', pd: 'pct' };
+
+  function arcDash(r, pct, maxPct) {
+    // Returns "arcLen gap" for a circle of radius r, clipped to ±maxPct range
+    const circ    = 2 * Math.PI * r;
+    const maxDeg  = r === 56 ? 263 : r === 44 ? 207 : 151;
+    const clipped = Math.max(-maxPct, Math.min(maxPct, pct));
+    const frac    = (clipped + maxPct) / (maxPct * 2);
+    const arcLen  = frac * (circ * maxDeg / 360);
+    return arcLen + ' ' + (circ - arcLen);
+  }
+
+  function arcColor(pct, baseColor) {
+    if (pct == null) return '#1a2035';
+    return pct > 0 ? '#00ff88' : pct < 0 ? '#ff2d78' : '#4a5580';
+  }
+
+  function setArc(id, r, pct, baseColor) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.setAttribute('stroke-dasharray', pct != null ? arcDash(r, pct, 15) : '0 999');
+    el.setAttribute('stroke', arcColor(pct, baseColor));
+  }
+
+  function fillGauge(metal, d) {
+    const pct     = d[metal+'_premium_pct'];
+    const pctDod  = d[metal+'_premium_pct_dod'];
+    const pctWow  = d[metal+'_premium_pct_wow'];
+    const usd     = d[metal+'_premium_usd_oz'];
+    const usdDod  = d[metal+'_premium_usd_oz_dod'];
+    const usdWow  = d[metal+'_premium_usd_oz_wow'];
+    const settle  = d[metal+'_gfex_settle_cny_g'];
+    const fwd     = d[metal+'_fwd_usd_oz'];
+    const fwdAdj  = d[metal+'_fwd_adjustment'];
+    const usdCny  = d.usd_cny_rate;
+    const fwdDays = d.fwd_days;
+    const baseCol = metal === 'pt' ? '#00c8ff' : '#ff8c00';
+
+    // Draw three concentric arcs
+    setArc(metal+'-arc',     32, pct,    baseCol);
+    setArc(metal+'-arc-dod', 44, pctDod, '#4a5580');
+    setArc(metal+'-arc-wow', 56, pctWow, '#4a5580');
+
+    // Centre text — today value
+    const isUp   = pct > 0, isDown = pct < 0;
+    const sign   = isUp ? '+' : '';
     const cls    = isUp ? 'up' : isDown ? 'down' : 'neu';
     const word   = isUp ? 'PREMIUM' : isDown ? 'DISCOUNT' : 'FLAT';
-    const sign   = isUp ? '+' : '';
+    const pctEl  = document.getElementById(metal+'-gauge-pct');
+    if (pctEl) pctEl.textContent = pct != null ? sign+pct.toFixed(2)+'%' : '—';
 
-    // Arc: 207 degrees = full sweep (75% of circle)
-    const maxDeg  = 207;
-    const circ    = 2 * Math.PI * 44;
-    const clipped = Math.max(-15, Math.min(15, premPct));
-    const frac    = (clipped + 15) / 30;
-    const arcLen  = frac * (circ * maxDeg / 360);
-    const gap     = circ - arcLen;
-
-    const arc = document.getElementById(metal+'-arc');
-    if (arc) {
-      arc.setAttribute('stroke-dasharray', arcLen+' '+gap);
-      arc.setAttribute('stroke', color);
-    }
-    const pctEl = document.getElementById(metal+'-gauge-pct');
-    if (pctEl) pctEl.textContent = premPct != null ? sign+premPct.toFixed(2)+'%' : '—';
-
+    // Big number below gauge
     const premEl = document.getElementById(metal+'-prem-usd');
     if (premEl) {
-      premEl.textContent = premUsd != null ? sign+'$'+Math.abs(premUsd).toFixed(2) : '—';
+      premEl.textContent = usd != null ? sign+'$'+Math.abs(usd).toFixed(2) : '—';
       premEl.className = 'gauge-prem '+cls;
     }
     const wordEl = document.getElementById(metal+'-prem-word');
     if (wordEl) { wordEl.textContent = word+' vs Loco London Fwd'; wordEl.className = 'gauge-word '+cls; }
 
+    // Data rows
     if (settle) document.getElementById(metal+'-settle-val').textContent = settle.toFixed(2)+' CNY/g';
     if (fwd)    document.getElementById(metal+'-fwd-val').textContent    = '$'+fwd.toFixed(2);
-    if (cnyUsd) document.getElementById(metal+'-cny-val').textContent    = cnyUsd.toFixed(4);
+    if (usdCny) document.getElementById(metal+'-cny-val').textContent    = usdCny.toFixed(4);
     const noteEl = document.getElementById(metal+'-gauge-note');
     if (noteEl && fwdAdj != null && fwdDays != null)
       noteEl.textContent = 'fwd adj '+fwdAdj+'% p.a. · '+fwdDays+'d · 26 Jun 2026';
+
+    // Store data for toggle
+    document.getElementById(metal+'-gauge-svg').dataset.pct    = pct ?? '';
+    document.getElementById(metal+'-gauge-svg').dataset.pctDod = pctDod ?? '';
+    document.getElementById(metal+'-gauge-svg').dataset.pctWow = pctWow ?? '';
+    document.getElementById(metal+'-gauge-svg').dataset.usd    = usd ?? '';
+    document.getElementById(metal+'-gauge-svg').dataset.usdDod = usdDod ?? '';
+    document.getElementById(metal+'-gauge-svg').dataset.usdWow = usdWow ?? '';
   }
 
-  fillGauge('pt',
-    data.pt_premium_pct, data.pt_premium_usd_oz,
-    data.pt_gfex_settle_cny_g, data.pt_fwd_usd_oz,
-    data.cny_usd_rate, data.pt_fwd_adjustment, data.fwd_days);
+  function toggleGaugeMode(metal) {
+    gaugeMode[metal] = gaugeMode[metal] === 'pct' ? 'usd' : 'pct';
+    const svg  = document.getElementById(metal+'-gauge-svg');
+    const mode = gaugeMode[metal];
+    const isPct = mode === 'pct';
+    const pctEl = document.getElementById(metal+'-gauge-pct');
+    const lblEl = document.getElementById(metal+'-gauge-label');
 
-  fillGauge('pd',
-    data.pd_premium_pct, data.pd_premium_usd_oz,
-    data.pd_gfex_settle_cny_g, data.pd_fwd_usd_oz,
-    data.cny_usd_rate, data.pd_fwd_adjustment, data.fwd_days);
+    if (isPct) {
+      const pct = svg.dataset.pct;
+      const sign = pct > 0 ? '+' : '';
+      if (pctEl) pctEl.textContent = pct !== '' ? sign+parseFloat(pct).toFixed(2)+'%' : '—';
+      if (lblEl) lblEl.textContent = 'TODAY';
+    } else {
+      const usd = svg.dataset.usd;
+      const sign = usd > 0 ? '+' : '';
+      if (pctEl) pctEl.textContent = usd !== '' ? sign+'$'+Math.abs(parseFloat(usd)).toFixed(0) : '—';
+      if (lblEl) lblEl.textContent = 'USD/OZ';
+    }
+  }
+
+  if (pgmxData) {
+    fillGauge('pt', pgmxData);
+    fillGauge('pd', pgmxData);
+  }
 
 }
 
@@ -799,6 +883,8 @@ async function init() {
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     pgmxData=await res.json();
     populateStats(pgmxData);
+    fillGauge('pt', pgmxData);
+    fillGauge('pd', pgmxData);
     populateOITable('platinum');
     buildCharts('platinum');
   } catch(err) {
