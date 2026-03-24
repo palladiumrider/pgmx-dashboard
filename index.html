@@ -207,45 +207,54 @@ async function handleSubmit(e) {
   }
 
 
-  /* ── PREMIUM BANNER ── */
-  .premium-banner {
-    display:grid; grid-template-columns: 1fr auto 1fr;
-    align-items:center; gap:24px;
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:2px; padding:20px 28px; margin-bottom:36px;
-    position:relative; overflow:hidden;
+  /* ── GAUGE BANNER ── */
+  .gauge-banner {
+    display:grid; grid-template-columns:1fr 1fr; gap:16px;
+    margin-bottom:36px;
     opacity:0; transform:translateY(18px);
     animation:fadeUp 0.55s ease forwards 0.1s;
   }
-  .premium-banner::before {
+  .gauge-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:2px; padding:24px 28px;
+    position:relative; overflow:hidden;
+    display:flex; align-items:center; gap:24px;
+  }
+  .gauge-card::before {
     content:''; position:absolute; top:0; left:0; right:0; height:2px;
-    background:linear-gradient(90deg,var(--neon-blue),var(--neon-purple),var(--neon-pink));
   }
-  .prem-block { display:flex; flex-direction:column; gap:4px; }
-  .prem-block.center { align-items:center; text-align:center; }
-  .prem-block.right  { align-items:flex-end; text-align:right; }
-  .prem-label {
-    font-family:'DM Mono',monospace; font-size:0.62rem;
-    letter-spacing:0.18em; text-transform:uppercase; color:var(--muted);
+  .gauge-card.pt-card::before { background:linear-gradient(90deg,var(--neon-blue),var(--neon-purple)); }
+  .gauge-card.pd-card::before { background:linear-gradient(90deg,var(--neon-orange),var(--neon-pink)); }
+  .gauge-svg { flex-shrink:0; }
+  .gauge-info { flex:1; min-width:0; }
+  .gauge-metal {
+    font-family:'Bebas Neue',sans-serif; font-size:1.1rem;
+    letter-spacing:0.12em; color:var(--muted); margin-bottom:2px;
   }
-  .prem-value {
-    font-family:'Bebas Neue',sans-serif; font-size:1.8rem;
-    letter-spacing:0.04em; color:var(--text); line-height:1;
+  .gauge-prem {
+    font-family:'Bebas Neue',sans-serif; font-size:2.6rem;
+    letter-spacing:0.03em; line-height:1; margin-bottom:4px;
   }
-  .prem-sub {
+  .gauge-prem.up   { color:var(--neon-green); }
+  .gauge-prem.down { color:var(--neon-pink); }
+  .gauge-prem.neu  { color:var(--muted); }
+  .gauge-word {
     font-family:'DM Mono',monospace; font-size:0.65rem;
-    color:var(--muted); letter-spacing:0.08em;
+    letter-spacing:0.2em; text-transform:uppercase; margin-bottom:12px;
   }
-  .prem-divider {
-    width:1px; height:48px; background:var(--border);
+  .gauge-word.up   { color:var(--neon-green); }
+  .gauge-word.down { color:var(--neon-pink); }
+  .gauge-word.neu  { color:var(--muted); }
+  .gauge-row {
+    display:flex; justify-content:space-between;
+    font-family:'DM Mono',monospace; font-size:0.62rem;
+    color:var(--muted); letter-spacing:0.08em; margin-top:4px;
   }
-  .prem-result {
-    font-family:'Bebas Neue',sans-serif; font-size:2.4rem;
-    letter-spacing:0.04em; line-height:1;
+  .gauge-row span:last-child { color:var(--text); }
+  .gauge-note {
+    font-family:'DM Mono',monospace; font-size:0.58rem;
+    color:var(--muted); opacity:0.6; margin-top:8px; letter-spacing:0.1em;
   }
-  .prem-result.premium { color:var(--neon-green); }
-  .prem-result.discount { color:var(--neon-pink); }
-  .prem-result.neutral  { color:var(--muted); }
 
 </style>
 </head>
@@ -264,27 +273,59 @@ async function handleSubmit(e) {
   </header>
 
 
-  <!-- ── PREMIUM / DISCOUNT BANNER ── -->
-  <div class="premium-banner" id="premiumBanner">
-    <div class="prem-block">
-      <div class="prem-label">GFEX PT Front Month Settle</div>
-      <div class="prem-value" id="prem-gfex-settle">—</div>
-      <div class="prem-sub" id="prem-gfex-sub">CNY/g · ex-VAT USD/oz: <span id="prem-gfex-usd">—</span></div>
-    </div>
-    <div style="display:flex;align-items:center;gap:16px;">
-      <div class="prem-divider"></div>
-      <div class="prem-block center">
-        <div class="prem-label">vs Loco London Fwd · 26 Jun 2026</div>
-        <div class="prem-result neutral" id="prem-result">—</div>
-        <div class="prem-sub" id="prem-result-sub">loading market data…</div>
+  <!-- ── GAUGE BANNER ── -->
+  <div class="gauge-banner">
+
+    <!-- Platinum gauge -->
+    <div class="gauge-card pt-card">
+      <svg class="gauge-svg" id="pt-gauge-svg" width="110" height="110" viewBox="0 0 110 110">
+        <circle cx="55" cy="55" r="44" fill="none" stroke="#1a2035" stroke-width="8"/>
+        <circle cx="55" cy="55" r="44" fill="none" stroke="#1a2035" stroke-width="8"
+          stroke-dasharray="207 69" stroke-dashoffset="52" stroke-linecap="round"/>
+        <circle id="pt-arc" cx="55" cy="55" r="44" fill="none" stroke="#00c8ff" stroke-width="8"
+          stroke-dasharray="0 276" stroke-dashoffset="52" stroke-linecap="round"
+          style="transition:stroke-dasharray 1s ease,stroke 0.4s"/>
+        <text id="pt-gauge-pct" x="55" y="50" text-anchor="middle" dominant-baseline="central"
+          style="font-family:'Bebas Neue',sans-serif;font-size:18px;fill:#dde8ff">—</text>
+        <text x="55" y="68" text-anchor="middle" dominant-baseline="central"
+          style="font-family:'DM Mono',monospace;font-size:8px;fill:#4a5580;letter-spacing:0.1em">PREMIUM</text>
+      </svg>
+      <div class="gauge-info">
+        <div class="gauge-metal">PLATINUM · PT2606</div>
+        <div class="gauge-prem neu" id="pt-prem-usd">—</div>
+        <div class="gauge-word neu" id="pt-prem-word">vs Loco London Fwd</div>
+        <div class="gauge-row"><span>GFEX settle</span><span id="pt-settle-val">—</span></div>
+        <div class="gauge-row"><span>Loco London fwd</span><span id="pt-fwd-val">—</span></div>
+        <div class="gauge-row"><span>CNY/USD</span><span id="pt-cny-val">—</span></div>
+        <div class="gauge-note" id="pt-gauge-note">fwd adj — p.a. · — days · 26 Jun 2026</div>
       </div>
-      <div class="prem-divider"></div>
     </div>
-    <div class="prem-block right">
-      <div class="prem-label">Loco London Fwd · 26 Jun 2026</div>
-      <div class="prem-value" id="prem-spot">—</div>
-      <div class="prem-sub" id="prem-spot-sub">USD/oz · CNY/USD: <span id="prem-cny">—</span></div>
+
+    <!-- Palladium gauge -->
+    <div class="gauge-card pd-card">
+      <svg class="gauge-svg" id="pd-gauge-svg" width="110" height="110" viewBox="0 0 110 110">
+        <circle cx="55" cy="55" r="44" fill="none" stroke="#1a2035" stroke-width="8"/>
+        <circle cx="55" cy="55" r="44" fill="none" stroke="#1a2035" stroke-width="8"
+          stroke-dasharray="207 69" stroke-dashoffset="52" stroke-linecap="round"/>
+        <circle id="pd-arc" cx="55" cy="55" r="44" fill="none" stroke="#ff8c00" stroke-width="8"
+          stroke-dasharray="0 276" stroke-dashoffset="52" stroke-linecap="round"
+          style="transition:stroke-dasharray 1s ease,stroke 0.4s"/>
+        <text id="pd-gauge-pct" x="55" y="50" text-anchor="middle" dominant-baseline="central"
+          style="font-family:'Bebas Neue',sans-serif;font-size:18px;fill:#dde8ff">—</text>
+        <text x="55" y="68" text-anchor="middle" dominant-baseline="central"
+          style="font-family:'DM Mono',monospace;font-size:8px;fill:#4a5580;letter-spacing:0.1em">PREMIUM</text>
+      </svg>
+      <div class="gauge-info">
+        <div class="gauge-metal">PALLADIUM · PD2606</div>
+        <div class="gauge-prem neu" id="pd-prem-usd">—</div>
+        <div class="gauge-word neu" id="pd-prem-word">vs Loco London Fwd</div>
+        <div class="gauge-row"><span>GFEX settle</span><span id="pd-settle-val">—</span></div>
+        <div class="gauge-row"><span>Loco London fwd</span><span id="pd-fwd-val">—</span></div>
+        <div class="gauge-row"><span>CNY/USD</span><span id="pd-cny-val">—</span></div>
+        <div class="gauge-note" id="pd-gauge-note">fwd adj — p.a. · — days · 26 Jun 2026</div>
+      </div>
     </div>
+
   </div>
 
   <div class="stats-grid">
@@ -547,45 +588,57 @@ function populateStats(data, commodity='platinum') {
 
   document.getElementById('generated-ts').textContent=data.generated;
 
-  // ── PREMIUM BANNER ──────────────────────────────────────────────────────────
-  const bannerSettle = data.pt_gfex_settle_cny_g;
-  const bannerSpot   = data.pt_spot_usd_oz;
-  const bannerCnyUsd = data.cny_usd_rate;
-  const premUsd      = data.pt_premium_usd_oz;
-  const premPct      = data.pt_premium_pct;
+  // ── GAUGE BANNER ────────────────────────────────────────────────────────────
+  function fillGauge(metal, premPct, premUsd, settle, fwd, cnyUsd, fwdAdj, fwdDays) {
+    const isUp   = premPct > 0;
+    const isDown = premPct < 0;
+    const colUp  = '#00ff88', colDown = '#ff2d78', colNeu = '#4a5580';
+    const color  = isUp ? colUp : isDown ? colDown : colNeu;
+    const cls    = isUp ? 'up' : isDown ? 'down' : 'neu';
+    const word   = isUp ? 'PREMIUM' : isDown ? 'DISCOUNT' : 'FLAT';
+    const sign   = isUp ? '+' : '';
 
-  if (bannerSettle) {
-    document.getElementById('prem-gfex-settle').textContent = bannerSettle.toFixed(2) + ' CNY/g';
-    const exVat = bannerSettle && bannerCnyUsd ? (bannerSettle * 31.1035 * bannerCnyUsd / 1.13).toFixed(2) : '—';
-    document.getElementById('prem-gfex-usd').textContent = exVat ? '$' + exVat : '—';
-  }
-  const bannerFwd  = data.pt_fwd_usd_oz;
-  const fwdDays    = data.pt_fwd_days;
-  const fwdAdj     = data.pt_fwd_adjustment;
+    // Arc: 207 degrees = full sweep (75% of circle)
+    const maxDeg  = 207;
+    const circ    = 2 * Math.PI * 44;
+    const clipped = Math.max(-15, Math.min(15, premPct));
+    const frac    = (clipped + 15) / 30;
+    const arcLen  = frac * (circ * maxDeg / 360);
+    const gap     = circ - arcLen;
 
-  if (bannerSpot) {
-    // Show forward-adjusted price, not raw spot
-    const displayPrice = bannerFwd ?? bannerSpot;
-    document.getElementById('prem-spot').textContent = '$' + displayPrice.toFixed(2);
-    document.getElementById('prem-spot-sub').textContent =
-      'USD/oz · CNY/USD: ' + (bannerCnyUsd ? bannerCnyUsd.toFixed(4) : '—');
+    const arc = document.getElementById(metal+'-arc');
+    if (arc) {
+      arc.setAttribute('stroke-dasharray', arcLen+' '+gap);
+      arc.setAttribute('stroke', color);
+    }
+    const pctEl = document.getElementById(metal+'-gauge-pct');
+    if (pctEl) pctEl.textContent = premPct != null ? sign+premPct.toFixed(2)+'%' : '—';
+
+    const premEl = document.getElementById(metal+'-prem-usd');
+    if (premEl) {
+      premEl.textContent = premUsd != null ? sign+'$'+Math.abs(premUsd).toFixed(2) : '—';
+      premEl.className = 'gauge-prem '+cls;
+    }
+    const wordEl = document.getElementById(metal+'-prem-word');
+    if (wordEl) { wordEl.textContent = word+' vs Loco London Fwd'; wordEl.className = 'gauge-word '+cls; }
+
+    if (settle) document.getElementById(metal+'-settle-val').textContent = settle.toFixed(2)+' CNY/g';
+    if (fwd)    document.getElementById(metal+'-fwd-val').textContent    = '$'+fwd.toFixed(2);
+    if (cnyUsd) document.getElementById(metal+'-cny-val').textContent    = cnyUsd.toFixed(4);
+    const noteEl = document.getElementById(metal+'-gauge-note');
+    if (noteEl && fwdAdj != null && fwdDays != null)
+      noteEl.textContent = 'fwd adj '+fwdAdj+'% p.a. · '+fwdDays+'d · 26 Jun 2026';
   }
-  if (premUsd != null && premPct != null) {
-    const isPrem   = premUsd > 0;
-    const isDisc   = premUsd < 0;
-    const sign     = isPrem ? '+' : '';
-    const cls      = isPrem ? 'premium' : isDisc ? 'discount' : 'neutral';
-    const word     = isPrem ? 'PREMIUM' : isDisc ? 'DISCOUNT' : 'FLAT';
-    document.getElementById('prem-result').textContent = sign + premUsd.toFixed(2) + ' USD/oz';
-    document.getElementById('prem-result').className   = 'prem-result ' + cls;
-    const adjNote = fwdAdj != null && fwdDays != null
-      ? ` · fwd adj ${fwdAdj}% p.a. · ${fwdDays}d`
-      : '';
-    document.getElementById('prem-result-sub').textContent =
-      sign + premPct.toFixed(2) + '% · ' + word + adjNote;
-  } else {
-    document.getElementById('prem-result-sub').textContent = 'Spot data captured at 8am London';
-  }
+
+  fillGauge('pt',
+    data.pt_premium_pct, data.pt_premium_usd_oz,
+    data.pt_gfex_settle_cny_g, data.pt_fwd_usd_oz,
+    data.cny_usd_rate, data.pt_fwd_adjustment, data.fwd_days);
+
+  fillGauge('pd',
+    data.pd_premium_pct, data.pd_premium_usd_oz,
+    data.pd_gfex_settle_cny_g, data.pd_fwd_usd_oz,
+    data.cny_usd_rate, data.pd_fwd_adjustment, data.fwd_days);
 
 }
 
