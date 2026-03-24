@@ -137,14 +137,60 @@ jobs:
         run: |
           cat << 'EOF' > export_json.py
           """
-          Export OI table and candlestick chart data to data/pgmx-data.json
+          Export OI table, candlestick data, platinum spot and CNY/USD rate
+          to data/pgmx-data.json for the PGMx dashboard.
           """
-          import json, sqlite3
+          import json, sqlite3, requests, warnings
           from datetime import datetime
           from pathlib import Path
+          warnings.filterwarnings("ignore")
 
           DB_PATH     = "gfex_platinum_palladium.db"
           OUTPUT_PATH = Path("data/pgmx-data.json")
+          TROY_OZ     = 31.1035  # grams per troy oz
+          VAT_FACTOR  = 1.13     # 13% Chinese VAT
+
+          def fetch_spot():
+              """Fetch platinum spot (USD/oz) and CNY/USD rate at 8am London."""
+              pt_spot, cny_usd = None, None
+              try:
+                  r = requests.get("https://api.metals.live/v1/spot/platinum", timeout=15)
+                  r.raise_for_status()
+                  data = r.json()
+                  # api.metals.live returns list of objects
+                  if isinstance(data, list) and data:
+                      pt_spot = float(data[0].get("price", 0)) or None
+                  elif isinstance(data, dict):
+                      pt_spot = float(data.get("price", 0)) or None
+                  print(f"  Platinum spot: {pt_spot} USD/oz")
+              except Exception as e:
+                  print(f"  Platinum spot fetch failed: {e}")
+              try:
+                  r = requests.get("https://api.frankfurter.dev/v1/latest?base=CNY&symbols=USD", timeout=15)
+                  r.raise_for_status()
+                  data = r.json()
+                  cny_usd = float(data["rates"]["USD"])
+                  print(f"  CNY/USD rate: {cny_usd}")
+              except Exception as e:
+                  print(f"  CNY/USD fetch failed: {e}")
+              return pt_spot, cny_usd
+
+          def calc_premium(gfex_settle_cny_g, pt_spot_usd_oz, cny_usd):
+              """Convert GFEX settle to USD/oz ex-VAT and compare to spot."""
+              if not all([gfex_settle_cny_g, pt_spot_usd_oz, cny_usd]):
+                  return None, None
+              gfex_usd_oz = (gfex_settle_cny_g / TROY_OZ) * cny_usd / (1 / (1 / VAT_FACTOR)) * (1 / VAT_FACTOR) * TROY_OZ
+              # Simplified: CNY/g -> CNY/oz -> USD/oz -> ex-VAT
+              gfex_usd_oz = (gfex_settle_cny_g * TROY_OZ * cny_usd) / VAT_FACTOR / TROY_OZ * TROY_OZ
+              gfex_usd_oz = round((gfex_settle_cny_g / TROY_OZ) * cny_usd / VAT_FACTOR * TROY_OZ, 2)
+              # Clean calculation:
+              # 1. CNY/g -> USD/g: multiply by cny_usd
+              # 2. USD/g -> USD/oz: multiply by TROY_OZ
+              # 3. Remove VAT: divide by VAT_FACTOR
+              gfex_usd_oz = round(gfex_settle_cny_g * cny_usd * TROY_OZ / VAT_FACTOR, 2)
+              premium_usd = round(gfex_usd_oz - pt_spot_usd_oz, 2)
+              premium_pct = round((gfex_usd_oz - pt_spot_usd_oz) / pt_spot_usd_oz * 100, 2)
+              return premium_usd, premium_pct
 
           def get_oi_table(conn, commodity, date_today, date_dod, date_wow):
               def get_oi(d):
@@ -191,8 +237,31 @@ jobs:
                   conn.close(); print("No data available yet — skipping export."); exit(0)
               date_today = dates[0]; date_dod = dates[1]
               date_wow   = dates[5] if len(dates) >= 6 else dates[-1]
-              output = {"generated": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-                        "date_today": date_today, "date_dod": date_dod, "date_wow": date_wow}
+
+              # Fetch spot price and FX rate at 8am London
+              print("Fetching spot prices...")
+              pt_spot_usd_oz, cny_usd = fetch_spot()
+
+              # Get GFEX front month settle for premium calc
+              cs_pt = get_candlestick(conn, "Platinum")
+              gfex_settle = None
+              if cs_pt and cs_pt["data"]:
+                  last = cs_pt["data"][-1]
+                  gfex_settle = last.get("settle") or last.get("close")
+
+              premium_usd, premium_pct = calc_premium(gfex_settle, pt_spot_usd_oz, cny_usd)
+
+              output = {
+                  "generated":      datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                  "date_today":     date_today,
+                  "date_dod":       date_dod,
+                  "date_wow":       date_wow,
+                  "pt_spot_usd_oz": pt_spot_usd_oz,
+                  "cny_usd_rate":   cny_usd,
+                  "pt_gfex_settle_cny_g": gfex_settle,
+                  "pt_premium_usd_oz":    premium_usd,
+                  "pt_premium_pct":       premium_pct,
+              }
               for commodity in ("Platinum", "Palladium"):
                   key = commodity.lower()
                   output[key] = {"candlestick": get_candlestick(conn, commodity),
@@ -202,6 +271,9 @@ jobs:
               with open(OUTPUT_PATH, "w") as f:
                   json.dump(output, f, indent=2)
               print(f"Saved → {OUTPUT_PATH}")
+              print(f"  GFEX settle: {gfex_settle} CNY/g")
+              print(f"  PT spot: {pt_spot_usd_oz} USD/oz  CNY/USD: {cny_usd}")
+              print(f"  Premium: {premium_usd} USD/oz ({premium_pct}%)")
               for commodity in ("Platinum", "Palladium"):
                   cs = output[commodity.lower()]["candlestick"]
                   oi = output[commodity.lower()]["oi_table"]
