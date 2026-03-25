@@ -525,9 +525,7 @@
         </div>
       </div>
       <canvas id="candleChart" style="max-height:320px;"></canvas>
-      <div style="font-family:'DM Mono',monospace;font-size:1.16rem;font-weight:700;color:var(--neon-pink);margin-top:10px;line-height:1.6">
-        The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.
-      </div>
+      <div id="candle-disclaimer" style="font-family:'DM Mono',monospace;font-size:0.87rem;font-weight:700;color:var(--neon-pink);margin-top:10px;line-height:1.6;display:none"></div>
     </div>
     <div class="chart-card orange-stripe">
       <div class="chart-header">
@@ -1014,6 +1012,20 @@ function buildCharts(commodity) {
   const premData   = labels.map(d => premByDate[d] ? premByDate[d].prem_usd : null);
   const premPctData= labels.map(d => premByDate[d] ? premByDate[d].prem_pct : null);
   const hasPremium = premData.some(v => v !== null);
+
+  // Update disclaimer visibility based on commodity and data availability
+  const disclaimerEl = document.getElementById('candle-disclaimer');
+  if (disclaimerEl) {
+    if (commodity === 'platinum') {
+      disclaimerEl.style.display = 'block';
+      disclaimerEl.innerHTML = hasPremium
+        ? 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.'
+        : 'Premium/discount overlay not available — run the workflow to generate historical spot data.';
+    } else {
+      disclaimerEl.style.display = 'block';
+      disclaimerEl.innerHTML = 'Premium/discount overlay for palladium coming soon — historical spot series not yet populated for PD.';
+    }
+  }
 
   candleChart=new Chart(cCtx,{
     type:'bar',
