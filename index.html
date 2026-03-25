@@ -402,7 +402,7 @@
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#2a3555;display:inline-block;border-radius:2px"></span>Last Wk</span>
         </div>
         <table class="breakdown-table">
-          <thead><tr><th></th><th>Today</th><th>T-2</th><th>Last Wk</th></tr></thead>
+          <thead><tr><th></th><th id="pt-th-today">Today</th><th id="pt-th-dod">T-2</th><th id="pt-th-wow">Last Wk</th></tr></thead>
           <tbody>
             <tr><td>GFEX</td><td id="pt-bd-gfex">—</td><td id="pt-bd-gfex-dod">—</td><td id="pt-bd-gfex-wow">—</td></tr>
             <tr><td style="padding-left:10px;font-style:italic;opacity:0.7">↳ ex-VAT $</td><td id="pt-bd-gfex-usd" style="font-style:italic;opacity:0.7">—</td><td id="pt-bd-gfex-usd-dod" style="font-style:italic;opacity:0.7">—</td><td id="pt-bd-gfex-usd-wow" style="font-style:italic;opacity:0.7">—</td></tr>
@@ -450,7 +450,7 @@
           <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#2a3555;display:inline-block;border-radius:2px"></span>Last Wk</span>
         </div>
         <table class="breakdown-table">
-          <thead><tr><th></th><th>Today</th><th>T-2</th><th>Last Wk</th></tr></thead>
+          <thead><tr><th></th><th id="pd-th-today">Today</th><th id="pd-th-dod">T-2</th><th id="pd-th-wow">Last Wk</th></tr></thead>
           <tbody>
             <tr><td>GFEX</td><td id="pd-bd-gfex">—</td><td id="pd-bd-gfex-dod">—</td><td id="pd-bd-gfex-wow">—</td></tr>
             <tr><td style="padding-left:10px;font-style:italic;opacity:0.7">↳ ex-VAT $</td><td id="pd-bd-gfex-usd" style="font-style:italic;opacity:0.7">—</td><td id="pd-bd-gfex-usd-dod" style="font-style:italic;opacity:0.7">—</td><td id="pd-bd-gfex-usd-wow" style="font-style:italic;opacity:0.7">—</td></tr>
@@ -850,6 +850,16 @@ function fillGauge(metal, d) {
   const gfexWow = d[metal+'_gfex_settle_wow'];
 
   const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+
+  // Update table column headers with dates in dd-mm format
+  function fmtDdMm(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    return parts.length === 3 ? '('+parts[2]+'-'+parts[1]+')' : '';
+  }
+  set(metal+'-th-today', 'Today '+fmtDdMm(d.date_today));
+  set(metal+'-th-dod',   'T-2 '+fmtDdMm(d.date_dod_spot || d.date_dod));
+  set(metal+'-th-wow',   'Last Wk '+fmtDdMm(d.date_wow));
   set(metal+'-bd-gfex',     fmtG(settle));
   set(metal+'-bd-gfex-dod', fmtG(gfexDod));
   set(metal+'-bd-gfex-wow', fmtG(gfexWow));
