@@ -525,6 +525,9 @@
         </div>
       </div>
       <canvas id="candleChart" style="max-height:320px;"></canvas>
+      <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);margin-top:10px;line-height:1.6;opacity:0.75">
+        ⚠ The premium/discount overlay assumes a flat forward curve — no forward adjustment for backwardation is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT fix, so this is not a like-for-like comparison. The chart is illustrative only. Note the unusually low premiums in January despite the GFEX front contract rally — a visible artifact of using close vs. open price.
+      </div>
     </div>
     <div class="chart-card orange-stripe">
       <div class="chart-header">
@@ -858,8 +861,8 @@ function fillGauge(metal, d) {
     return parts.length === 3 ? '('+parts[2]+'-'+parts[1]+')' : '';
   }
   set(metal+'-th-today', 'Today '+fmtDdMm(d.date_today));
-  set(metal+'-th-dod',   'T-2 '+fmtDdMm(d.date_dod_spot || d.date_dod));
-  set(metal+'-th-wow',   'Last Wk '+fmtDdMm(d.date_wow));
+  set(metal+'-th-dod',   'T-2');
+  set(metal+'-th-wow',   'Last Wk');
   set(metal+'-bd-gfex',     fmtG(settle));
   set(metal+'-bd-gfex-dod', fmtG(gfexDod));
   set(metal+'-bd-gfex-wow', fmtG(gfexWow));
