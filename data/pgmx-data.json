@@ -1,5 +1,5 @@
 {
-  "generated": "2026-03-26T07:47:16",
+  "generated": "2026-03-26T10:22:42",
   "date_today": "2026-03-26",
   "date_dod": "2026-03-25",
   "date_dod_spot": "2026-03-24",
@@ -11,32 +11,32 @@
   "fwd_days": 88,
   "pt_fwd_days_dod": 91,
   "pt_fwd_days_wow": 95,
-  "pt_spot_usd_oz": 1883.18,
+  "pt_spot_usd_oz": 1882.0,
   "pt_spot_dod": 1834.09,
   "pt_spot_wow": 2039.27,
-  "pt_fwd_usd_oz": 1857.86,
+  "pt_fwd_usd_oz": 1856.7,
   "pt_fwd_dod": 1808.31,
   "pt_fwd_wow": 2009.67,
   "pt_gfex_settle_cny_g": 493.15,
   "pt_gfex_settle_dod": 478.9,
   "pt_gfex_settle_wow": 520.05,
-  "pt_premium_usd_oz": 109.56,
-  "pt_premium_pct": 5.9,
+  "pt_premium_usd_oz": 110.72,
+  "pt_premium_pct": 5.96,
   "pt_premium_usd_oz_dod": 103.98,
   "pt_premium_pct_dod": 5.75,
   "pt_premium_usd_oz_wow": 64.79,
   "pt_premium_pct_wow": 3.22,
-  "pd_spot_usd_oz": 1380.81,
+  "pd_spot_usd_oz": 1385.09,
   "pd_spot_dod": 1386.97,
   "pd_spot_wow": 1501.29,
-  "pd_fwd_usd_oz": 1379.12,
+  "pd_fwd_usd_oz": 1383.4,
   "pd_fwd_dod": 1385.2,
   "pd_fwd_wow": 1499.31,
   "pd_gfex_settle_cny_g": 358.25,
   "pd_gfex_settle_dod": 350.75,
   "pd_gfex_settle_wow": 379.0,
-  "pd_premium_usd_oz": 50.12,
-  "pd_premium_pct": 3.63,
+  "pd_premium_usd_oz": 45.84,
+  "pd_premium_pct": 3.31,
   "pd_premium_usd_oz_dod": 15.37,
   "pd_premium_pct_dod": 1.11,
   "pd_premium_usd_oz_wow": 12.5,
@@ -90,6 +90,13 @@
       "spot": 1650.47,
       "prem_usd": 63.69,
       "prem_pct": 3.86
+    },
+    {
+      "date": "2025-12-08",
+      "gfex_usd": 1721.85,
+      "spot": 1655.55,
+      "prem_usd": 66.3,
+      "prem_pct": 4.0
     },
     {
       "date": "2025-12-09",
@@ -414,20 +421,6 @@
       "prem_pct": 4.36
     },
     {
-      "date": "2026-02-13",
-      "gfex_usd": 2083.38,
-      "spot": 2025.47,
-      "prem_usd": 57.91,
-      "prem_pct": 2.86
-    },
-    {
-      "date": "2026-02-24",
-      "gfex_usd": 2189.83,
-      "spot": 2116.18,
-      "prem_usd": 73.65,
-      "prem_pct": 3.48
-    },
-    {
       "date": "2026-02-25",
       "gfex_usd": 2315.76,
       "spot": 2198.72,
@@ -648,6 +641,16 @@
           "settle": 440.3,
           "volume": 8194,
           "oi": 10524
+        },
+        {
+          "date": "2025-12-08",
+          "open": 440.05,
+          "high": 445.6,
+          "low": 438.75,
+          "close": 443.2,
+          "settle": 442.15,
+          "volume": 9834,
+          "oi": 10877
         },
         {
           "date": "2025-12-09",
@@ -1110,26 +1113,6 @@
           "oi": 20363
         },
         {
-          "date": "2026-02-13",
-          "open": 520.0,
-          "high": 529.65,
-          "low": 516.0,
-          "close": 523.8,
-          "settle": 522.9,
-          "volume": 6333,
-          "oi": 20073
-        },
-        {
-          "date": "2026-02-24",
-          "open": 549.05,
-          "high": 552.65,
-          "low": 540.0,
-          "close": 551.85,
-          "settle": 547.5,
-          "volume": 5807,
-          "oi": 20101
-        },
-        {
           "date": "2026-02-25",
           "open": 556.75,
           "high": 592.6,
@@ -1457,6 +1440,16 @@
           "settle": 379.65,
           "volume": 4637,
           "oi": 3201
+        },
+        {
+          "date": "2025-12-08",
+          "open": 380.5,
+          "high": 385.5,
+          "low": 378.7,
+          "close": 383.7,
+          "settle": 382.25,
+          "volume": 4963,
+          "oi": 3409
         },
         {
           "date": "2025-12-09",
@@ -1917,26 +1910,6 @@
           "settle": 430.15,
           "volume": 2978,
           "oi": 7351
-        },
-        {
-          "date": "2026-02-13",
-          "open": 411.1,
-          "high": 423.7,
-          "low": 411.0,
-          "close": 416.8,
-          "settle": 419.3,
-          "volume": 3225,
-          "oi": 7188
-        },
-        {
-          "date": "2026-02-24",
-          "open": 436.8,
-          "high": 443.5,
-          "low": 431.55,
-          "close": 438.45,
-          "settle": 438.25,
-          "volume": 3410,
-          "oi": 7285
         },
         {
           "date": "2026-02-25",
