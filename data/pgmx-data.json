@@ -1,5 +1,5 @@
 {
-  "generated": "2026-03-30T10:57:53",
+  "generated": "2026-03-30T11:44:05",
   "date_today": "2026-03-30",
   "date_dod": "2026-03-27",
   "date_dod_spot": "2026-03-26",
@@ -11,32 +11,32 @@
   "fwd_days": 86,
   "pt_fwd_days_dod": 87,
   "pt_fwd_days_wow": 93,
-  "pt_spot_usd_oz": 1920.14,
+  "pt_spot_usd_oz": 1925.88,
   "pt_spot_dod": 1924.26,
   "pt_spot_wow": 1879.51,
-  "pt_fwd_usd_oz": 1894.91,
+  "pt_fwd_usd_oz": 1900.58,
   "pt_fwd_dod": 1898.39,
   "pt_fwd_wow": 1852.81,
   "pt_gfex_settle_cny_g": 492.3,
   "pt_gfex_settle_dod": 493.15,
   "pt_gfex_settle_wow": 470.4,
-  "pt_premium_usd_oz": 65.06,
-  "pt_premium_pct": 3.43,
+  "pt_premium_usd_oz": 59.39,
+  "pt_premium_pct": 3.12,
   "pt_premium_usd_oz_dod": 65.91,
   "pt_premium_pct_dod": 3.47,
   "pt_premium_usd_oz_wow": 25.93,
   "pt_premium_pct_wow": 1.4,
-  "pd_spot_usd_oz": 1425.96,
+  "pd_spot_usd_oz": 1434.87,
   "pd_spot_dod": 1429.33,
   "pd_spot_wow": 1412.52,
-  "pd_fwd_usd_oz": 1424.26,
+  "pd_fwd_usd_oz": 1433.16,
   "pd_fwd_dod": 1427.58,
   "pd_fwd_wow": 1410.7,
   "pd_gfex_settle_cny_g": 358.2,
   "pd_gfex_settle_dod": 358.25,
   "pd_gfex_settle_wow": 342.75,
-  "pd_premium_usd_oz": 1.82,
-  "pd_premium_pct": 0.13,
+  "pd_premium_usd_oz": -7.08,
+  "pd_premium_pct": -0.49,
   "pd_premium_usd_oz_dod": -0.61,
   "pd_premium_pct_dod": -0.04,
   "pd_premium_usd_oz_wow": -41.79,
@@ -57,6 +57,13 @@
       "prem_pct": 3.66
     },
     {
+      "date": "2025-12-01",
+      "gfex_usd": 1767.71,
+      "spot": 1687.76,
+      "prem_usd": 79.95,
+      "prem_pct": 4.74
+    },
+    {
       "date": "2025-12-02",
       "gfex_usd": 1732.6,
       "spot": 1661.72,
@@ -69,6 +76,13 @@
       "spot": 1652.21,
       "prem_usd": 71.71,
       "prem_pct": 4.34
+    },
+    {
+      "date": "2025-12-04",
+      "gfex_usd": 1719.25,
+      "spot": 1668.83,
+      "prem_usd": 50.42,
+      "prem_pct": 3.02
     },
     {
       "date": "2025-12-05",
@@ -607,6 +621,16 @@
           "oi": 8048
         },
         {
+          "date": "2025-12-01",
+          "open": 447.7,
+          "high": 462.25,
+          "low": 444.7,
+          "close": 451.6,
+          "settle": 454.15,
+          "volume": 44391,
+          "oi": 10624
+        },
+        {
           "date": "2025-12-02",
           "open": 446.2,
           "high": 449.75,
@@ -625,6 +649,16 @@
           "settle": 442.4,
           "volume": 18148,
           "oi": 10664
+        },
+        {
+          "date": "2025-12-04",
+          "open": 444.0,
+          "high": 444.8,
+          "low": 438.45,
+          "close": 439.65,
+          "settle": 441.7,
+          "volume": 10934,
+          "oi": 10387
         },
         {
           "date": "2025-12-05",
@@ -1426,6 +1460,16 @@
           "oi": 2550
         },
         {
+          "date": "2025-12-01",
+          "open": 380.75,
+          "high": 390.4,
+          "low": 374.55,
+          "close": 382.35,
+          "settle": 382.8,
+          "volume": 22034,
+          "oi": 3028
+        },
+        {
           "date": "2025-12-02",
           "open": 375.0,
           "high": 377.65,
@@ -1444,6 +1488,16 @@
           "settle": 381.95,
           "volume": 14894,
           "oi": 3089
+        },
+        {
+          "date": "2025-12-04",
+          "open": 382.9,
+          "high": 384.4,
+          "low": 377.5,
+          "close": 379.25,
+          "settle": 380.9,
+          "volume": 6942,
+          "oi": 3179
         },
         {
           "date": "2025-12-05",
