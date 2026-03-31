@@ -1005,8 +1005,10 @@ function buildCharts(commodity) {
   // Candlestick + premium overlay
   const cCtx=document.getElementById('candleChart').getContext('2d');
 
-  // Build premium series aligned to chart labels (platinum only)
-  const premSeries = (commodity === 'platinum' && pgmxData.pt_premium_series) ? pgmxData.pt_premium_series : [];
+  // Build premium series — platinum or palladium
+  const premSeries = commodity === 'platinum'
+    ? (pgmxData.pt_premium_series || [])
+    : (pgmxData.pd_premium_series || []);
   const premByDate = {};
   premSeries.forEach(p => { premByDate[p.date] = p; });
   const premData   = labels.map(d => premByDate[d] ? premByDate[d].prem_usd : null);
@@ -1018,12 +1020,14 @@ function buildCharts(commodity) {
   if (disclaimerEl) {
     if (commodity === 'platinum') {
       disclaimerEl.style.display = 'block';
-      disclaimerEl.innerHTML = hasPremium
-        ? 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.'
-        : 'Premium/discount overlay not available — run the workflow to generate historical spot data.';
-    } else {
-      disclaimerEl.style.display = 'block';
-      disclaimerEl.innerHTML = 'Premium/discount overlay for palladium coming soon — historical spot series not yet populated for PD.';
+      const ptMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.';
+      const pdMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low palladium premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.';
+      const noDataMsg = 'Premium/discount overlay not available — run the workflow to generate historical spot data.';
+      if (commodity === 'platinum') {
+        disclaimerEl.innerHTML = hasPremium ? ptMsg : noDataMsg;
+      } else {
+        disclaimerEl.innerHTML = hasPremium ? pdMsg : noDataMsg;
+      }
     }
   }
 
@@ -1035,9 +1039,9 @@ function buildCharts(commodity) {
         { label:contract, data:bodyData, backgroundColor:bodyColors, borderColor:bodyColors, borderWidth:1, borderSkipped:false, barPercentage:0.5, categoryPercentage:0.8, _ohlc:ohlc, yAxisID:'yPrice', order:2 },
         hasPremium ? {
           type:'line', label:'Premium USD/oz', data:premData,
-          borderColor:'#b347ff', borderWidth:1.5,
+          borderColor: commodity === 'platinum' ? '#b347ff' : '#ff8c00', borderWidth:1.5,
           pointRadius:0, pointHoverRadius:4,
-          pointHoverBackgroundColor:'#b347ff',
+          pointHoverBackgroundColor: commodity === 'platinum' ? '#b347ff' : '#ff8c00',
           fill:false, tension:0.3,
           yAxisID:'yPrem', order:1,
           spanGaps:true
@@ -1064,8 +1068,8 @@ function buildCharts(commodity) {
         yPrem: hasPremium ? {
           position:'right',
           grid:{display:false},
-          ticks:{color:'#b347ff', callback:v=>'$'+v.toFixed(0)},
-          title:{display:true, text:'Premium USD/oz', color:'#b347ff', font:{size:10}}
+          ticks:{color: commodity === 'platinum' ? '#b347ff' : '#ff8c00', callback:v=>'$'+v.toFixed(0)},
+          title:{display:true, text:'Premium USD/oz', color: commodity === 'platinum' ? '#b347ff' : '#ff8c00', font:{size:10}}
         } : {display:false}
       }
     },
