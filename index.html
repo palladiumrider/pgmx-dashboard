@@ -364,7 +364,7 @@
 
 
   <div style="font-family:'DM Mono',monospace;font-size:0.78rem;font-weight:700;color:var(--neon-orange);line-height:1.8;margin-top:28px;padding:20px 24px;border:1px solid var(--border);border-left:3px solid var(--neon-orange);background:rgba(255,140,0,0.04);border-radius:2px;">
-    📌 PGM premiums in GFEX are rising at a fast clip since the drop on 23-Mar. We have yet to see a notable jump in activity in any contract possibly led by the fast approaching first delivery notice date. Note Palladium premium, trading back to 29-Jan levels after going into discount last week. 
+    📌 PGM premiums in GFEX are rising at a fast clip since the drop on 23-Mar. We have yet to see a notable jump in activity in any contract. Note Palladium premium, trading back to 29-Jan levels. How can we forget what happened on 29-Jan across the precious complex.
   </div>
 
   <!-- ── GAUGE BANNER ── -->
@@ -856,6 +856,36 @@ function fillGauge(metal, d) {
 
   const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
 
+  // ── HARDCODED FORWARD ADJUSTMENTS ────────────────────────────────────────
+  // Today & T-2: PT = -4.75%, PD =  0.00%
+  // Last Wk:     PT = -5.50%, PD = -0.50%
+  // All forwards use act/360 day count convention.
+  const adjToday = metal === 'pt' ? -4.75 : 0.00;
+  const adjDod   = metal === 'pt' ? -4.75 : 0.00;
+  const adjWow   = metal === 'pt' ? -5.50 : -0.50;
+
+  // Recalculate Fwd $ using act/360: Fwd = Spot x (1 + adj%/100 x days/360)
+  // days = calendar days from spot value date (trade + 2 biz days) to 26-Jun-2026
+  function calcFwdUsd(spotUsdOz, adj, dateStr) {
+    if (!spotUsdOz || adj == null || !dateStr) return null;
+    function addBizDays(date, n) {
+      let d2 = new Date(date); let count = 0;
+      while (count < n) { d2.setDate(d2.getDate()+1); if(d2.getDay()!==0&&d2.getDay()!==6) count++; }
+      return d2;
+    }
+    const tradeDate = new Date(dateStr);
+    const valueDate = addBizDays(tradeDate, 2);
+    const fwdDate   = new Date('2026-06-26');
+    const days      = Math.round((fwdDate - valueDate) / 86400000);
+    const fwdFactor = 1 + (adj / 100) * days / 360;
+    return +(spotUsdOz * fwdFactor).toFixed(1);
+  }
+
+  const spotToday     = d[metal+'_spot_usd_oz'];
+  const fwdDisplay    = calcFwdUsd(spotToday, adjToday, d.date_today) ?? fwd;
+  const fwdDodDisplay = calcFwdUsd(spotDod,   adjDod,   d.date_dod)   ?? fwdDod;
+  const fwdWowDisplay = calcFwdUsd(spotWow,   adjWow,   d.date_wow)   ?? fwdWow;
+
   // Update table column headers with dates in dd-mm format
   function fmtDdMm(dateStr) {
     if (!dateStr) return '';
@@ -878,12 +908,12 @@ function fillGauge(metal, d) {
   set(metal+'-bd-spot',     fmtS(d[metal+'_spot_usd_oz']));
   set(metal+'-bd-spot-dod', fmtS(spotDod));
   set(metal+'-bd-spot-wow', fmtS(spotWow));
-  set(metal+'-bd-mid',      fmtM(fwdAdj));
-  set(metal+'-bd-mid-dod',  fmtM(fwdAdj));
-  set(metal+'-bd-mid-wow',  fmtM(fwdAdj));
-  set(metal+'-bd-fwd',      fmtS(fwd));
-  set(metal+'-bd-fwd-dod',  fmtS(fwdDod));
-  set(metal+'-bd-fwd-wow',  fmtS(fwdWow));
+  set(metal+'-bd-mid',      fmtM(adjToday));
+  set(metal+'-bd-mid-dod',  fmtM(adjDod));
+  set(metal+'-bd-mid-wow',  fmtM(adjWow));
+  set(metal+'-bd-fwd',      fmtS(fwdDisplay));
+  set(metal+'-bd-fwd-dod',  fmtS(fwdDodDisplay));
+  set(metal+'-bd-fwd-wow',  fmtS(fwdWowDisplay));
 
   // Store all values for toggle
   const svg = document.getElementById(metal+'-gauge-svg');
@@ -1239,32 +1269,32 @@ function buildCustomData(ptToday, ptDod, ptWow, pdToday, pdDod, pdWow) {
   const custom = JSON.parse(JSON.stringify(pgmxData));
   if (ptToday) {
     custom.pt_spot_usd_oz = ptToday;
-    const r = calcPremiumJS(pgmxData.pt_gfex_settle_cny_g, ptToday, pgmxData.cny_usd_rate, pgmxData.pt_fwd_adjustment, pgmxData.date_today);
+    const r = calcPremiumJS(pgmxData.pt_gfex_settle_cny_g, ptToday, pgmxData.cny_usd_rate, -4.75, pgmxData.date_today);
     if (r) { custom.pt_premium_usd_oz = r.premUsd; custom.pt_premium_pct = r.premPct; custom.pt_fwd_usd_oz = r.fwdUsdOz; }
   }
   if (ptDod) {
     custom.pt_spot_dod = ptDod;
-    const r = calcPremiumJS(pgmxData.pt_gfex_settle_dod, ptDod, pgmxData.cny_usd_rate, pgmxData.pt_fwd_adjustment, pgmxData.date_dod);
+    const r = calcPremiumJS(pgmxData.pt_gfex_settle_dod, ptDod, pgmxData.cny_usd_rate, -4.75, pgmxData.date_dod);
     if (r) { custom.pt_premium_usd_oz_dod = r.premUsd; custom.pt_premium_pct_dod = r.premPct; custom.pt_fwd_dod = r.fwdUsdOz; }
   }
   if (ptWow) {
     custom.pt_spot_wow = ptWow;
-    const r = calcPremiumJS(pgmxData.pt_gfex_settle_wow, ptWow, pgmxData.cny_usd_rate, pgmxData.pt_fwd_adjustment, pgmxData.date_wow);
+    const r = calcPremiumJS(pgmxData.pt_gfex_settle_wow, ptWow, pgmxData.cny_usd_rate, -5.50, pgmxData.date_wow);
     if (r) { custom.pt_premium_usd_oz_wow = r.premUsd; custom.pt_premium_pct_wow = r.premPct; custom.pt_fwd_wow = r.fwdUsdOz; }
   }
   if (pdToday) {
     custom.pd_spot_usd_oz = pdToday;
-    const r = calcPremiumJS(pgmxData.pd_gfex_settle_cny_g, pdToday, pgmxData.cny_usd_rate, pgmxData.pd_fwd_adjustment, pgmxData.date_today);
+    const r = calcPremiumJS(pgmxData.pd_gfex_settle_cny_g, pdToday, pgmxData.cny_usd_rate, 0.00, pgmxData.date_today);
     if (r) { custom.pd_premium_usd_oz = r.premUsd; custom.pd_premium_pct = r.premPct; custom.pd_fwd_usd_oz = r.fwdUsdOz; }
   }
   if (pdDod) {
     custom.pd_spot_dod = pdDod;
-    const r = calcPremiumJS(pgmxData.pd_gfex_settle_dod, pdDod, pgmxData.cny_usd_rate, pgmxData.pd_fwd_adjustment, pgmxData.date_dod);
+    const r = calcPremiumJS(pgmxData.pd_gfex_settle_dod, pdDod, pgmxData.cny_usd_rate, 0.00, pgmxData.date_dod);
     if (r) { custom.pd_premium_usd_oz_dod = r.premUsd; custom.pd_premium_pct_dod = r.premPct; custom.pd_fwd_dod = r.fwdUsdOz; }
   }
   if (pdWow) {
     custom.pd_spot_wow = pdWow;
-    const r = calcPremiumJS(pgmxData.pd_gfex_settle_wow, pdWow, pgmxData.cny_usd_rate, pgmxData.pd_fwd_adjustment, pgmxData.date_wow);
+    const r = calcPremiumJS(pgmxData.pd_gfex_settle_wow, pdWow, pgmxData.cny_usd_rate, -0.50, pgmxData.date_wow);
     if (r) { custom.pd_premium_usd_oz_wow = r.premUsd; custom.pd_premium_pct_wow = r.premPct; custom.pd_fwd_wow = r.fwdUsdOz; }
   }
   return custom;
