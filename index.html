@@ -383,6 +383,107 @@
   }
   .spot-status.active { color:var(--neon-orange); }
 
+
+  /* ── KEY DATES BUTTON ── */
+  .key-dates-area { display:flex; align-items:center; gap:14px; }
+  .delivery-label {
+    font-family:'DM Mono',monospace; font-size:0.62rem;
+    letter-spacing:0.14em; text-transform:uppercase; color:var(--muted);
+    line-height:1.4;
+  }
+  .delivery-date {
+    font-family:'Bebas Neue',sans-serif; font-size:1.4rem;
+    letter-spacing:0.06em; color:var(--neon-green);
+    filter:drop-shadow(0 0 8px rgba(0,255,136,0.4));
+    line-height:1;
+  }
+  .key-dates-btn {
+    font-family:'DM Mono',monospace; font-size:0.65rem;
+    letter-spacing:0.16em; text-transform:uppercase;
+    padding:9px 18px; border-radius:3px; cursor:pointer;
+    border:1px solid var(--neon-purple);
+    background:rgba(179,71,255,0.1); color:var(--neon-purple);
+    box-shadow:0 0 14px rgba(179,71,255,0.2);
+    transition:all 0.18s;
+  }
+  .key-dates-btn:hover { background:rgba(179,71,255,0.22); box-shadow:0 0 22px rgba(179,71,255,0.4); }
+
+  /* ── KEY DATES CALENDAR MODAL ── */
+  .kdcal-overlay {
+    display:none; position:fixed; inset:0; z-index:400;
+    background:rgba(5,8,15,0.88); backdrop-filter:blur(8px);
+    align-items:center; justify-content:center;
+  }
+  .kdcal-overlay.open { display:flex; }
+  .kdcal-modal {
+    background:var(--surface); border:1px solid var(--border);
+    border-top:2px solid var(--neon-purple);
+    border-radius:4px; padding:28px 32px;
+    width:min(860px,96vw); position:relative;
+    animation:fadeUp 0.3s ease;
+    box-shadow:0 24px 80px rgba(0,0,0,0.65);
+  }
+  .kdcal-close {
+    position:absolute; top:14px; right:18px;
+    background:none; border:none; color:var(--muted);
+    font-size:1.2rem; cursor:pointer; transition:color 0.15s;
+  }
+  .kdcal-close:hover { color:var(--text); }
+  .kdcal-title {
+    font-family:'Bebas Neue',sans-serif; font-size:1.5rem;
+    letter-spacing:0.12em; color:var(--text); margin-bottom:20px;
+  }
+  .kdcal-months { display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+  .kdcal-month-title {
+    font-family:'Bebas Neue',sans-serif; font-size:1.1rem;
+    letter-spacing:0.1em; color:var(--neon-blue); margin-bottom:10px;
+    text-align:center;
+  }
+  .kdcal-grid {
+    display:grid; grid-template-columns:repeat(7,1fr); gap:3px;
+  }
+  .kdcal-dow {
+    font-family:'DM Mono',monospace; font-size:0.58rem;
+    letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--muted); text-align:center; padding:4px 0;
+  }
+  .kdcal-day {
+    font-family:'DM Mono',monospace; font-size:0.75rem;
+    text-align:center; padding:6px 2px; border-radius:50%;
+    color:var(--muted); min-width:28px; line-height:1;
+    position:relative;
+  }
+  .kdcal-day.has-date {
+    color:var(--text); cursor:pointer; transition:background 0.15s;
+  }
+  .kdcal-day.has-date:hover { background:rgba(0,200,255,0.08); }
+  .kdcal-day.key-date {
+    background:rgba(220,38,38,0.15);
+    color:#fff; font-weight:700; cursor:pointer;
+  }
+  .kdcal-day.key-date .kdcal-dot {
+    display:flex; align-items:center; justify-content:center;
+    width:28px; height:28px; border-radius:50%;
+    background:#dc2626; color:#fff;
+    font-family:'DM Mono',monospace; font-size:0.75rem; font-weight:700;
+    margin:0 auto; box-shadow:0 0 10px rgba(220,38,38,0.6);
+    transition:box-shadow 0.15s, transform 0.15s;
+  }
+  .kdcal-day.key-date:hover .kdcal-dot { box-shadow:0 0 18px rgba(220,38,38,0.9); transform:scale(1.12); }
+  .kdcal-day.empty { pointer-events:none; }
+
+  /* tooltip */
+  .kdcal-tooltip {
+    position:absolute; z-index:500; pointer-events:none;
+    background:var(--surface2); border:1px solid var(--neon-purple);
+    border-radius:3px; padding:10px 14px; max-width:220px;
+    font-family:'DM Mono',monospace; font-size:0.68rem;
+    color:var(--text); line-height:1.6; letter-spacing:0.06em;
+    box-shadow:0 8px 30px rgba(0,0,0,0.5);
+    opacity:0; transition:opacity 0.15s;
+    white-space:normal;
+  }
+  .kdcal-tooltip.visible { opacity:1; }
 </style>
 </head>
 <body>
@@ -393,15 +494,18 @@
       <div class="logo-sub">Activity Dashboard</div>
       <div class="logo-tagline">A first take on GFEX PGM data</div>
     </div>
-    <div class="header-right">
-      <div class="clock" id="clock">--</div>
-      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div class="key-dates-area">
+      <div>
+        <div class="delivery-label">First Delivery</div>
+        <div class="delivery-date">01 Jun 2026</div>
+      </div>
+      <button class="key-dates-btn" onclick="openKdCal()">Key Dates ▾</button>
     </div>
   </header>
 
 
   <div style="font-family:'DM Mono',monospace;font-size:0.78rem;font-weight:700;color:var(--neon-orange);line-height:1.8;margin-top:28px;padding:20px 24px;border:1px solid var(--border);border-left:3px solid var(--neon-orange);background:rgba(255,140,0,0.04);border-radius:2px;">
-    📌 PGM premiums in GFEX are rising at a fast clip since the drop on 23-Mar. We have yet to see a notable jump in activity in any contract. Note Palladium premium, trading back to 29-Jan levels. How can we forget what happened on 29-Jan across the precious complex.
+    📌 <b>31 Mar, 11 am London:</b> PGM premiums in GFEX are rising since the drop on 23-Mar. However, we have yet to see a notable jump in activity on any contract. Note Palladium premium, trading back to 29-Jan levels.
   </div>
 
   <!-- ── GAUGE BANNER ── -->
@@ -578,6 +682,7 @@
         </div>
       </div>
       <canvas id="volChart" style="max-height:180px;"></canvas>
+      <div id="vol-disclaimer" style="font-family:'DM Mono',monospace;font-size:0.75rem;font-weight:600;color:var(--neon-orange);margin-top:10px;line-height:1.7;display:none"></div>
     </div>
     <div class="chart-card green-stripe">
       <div class="chart-header">
@@ -675,7 +780,7 @@
     <div class="spot-modal">
       <button class="spot-modal-close" onclick="closeSpotModal()">✕</button>
       <div class="spot-modal-title">Custom Spot Prices</div>
-      <div class="spot-modal-sub">I need your help inputting today's 7am London GMT spot price for platinum and palladium, along with the values for T-2 and one week ago. Thank you! Others will see your input and can also overwrite your values if they disagree.</div>
+      <div class="spot-modal-sub">I need your help inputting today's 8 AM London spot price for platinum and palladium, along with the values for T-2 and one week ago. Thank you! Others will see your input and can also overwrite your values if they disagree.</div>
 
       <div class="spot-section-label pt">Platinum</div>
       <div class="spot-input-grid">
@@ -717,17 +822,21 @@
     </div>
   </div>
 
+
+  <!-- ── KEY DATES CALENDAR MODAL ── -->
+  <div class="kdcal-overlay" id="kdCalOverlay" onclick="handleKdOverlay(event)">
+    <div class="kdcal-modal">
+      <button class="kdcal-close" onclick="closeKdCal()">✕</button>
+      <div class="kdcal-title">GFEX Jun-26 · Key Contract Dates</div>
+      <div class="kdcal-months" id="kdCalMonths"></div>
+    </div>
+  </div>
+  <div class="kdcal-tooltip" id="kdTooltip"></div>
+
+
 </div>
 
 <script>
-// ── CLOCK ──────────────────────────────────────────────────────────────────
-function updateClock() {
-  const now=new Date(), days=['SUN','MON','TUE','WED','THU','FRI','SAT'], months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  const pad=n=>String(n).padStart(2,'0');
-  document.getElementById('clock').textContent=`${days[now.getDay()]} ${pad(now.getDate())} ${months[now.getMonth()]} ${now.getFullYear()} · ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-}
-setInterval(updateClock,1000); updateClock();
-
 Chart.defaults.color='#4a5580';
 Chart.defaults.font.family="'DM Mono', monospace";
 Chart.defaults.font.size=11;
@@ -938,8 +1047,8 @@ function fillGauge(metal, d) {
   // Today & T-2: PT = -4.75%, PD =  0.00%
   // Last Wk:     PT = -5.50%, PD = -0.50%
   // All forwards use act/360 day count convention.
-  const adjToday = metal === 'pt' ? -4.75 : 0.00;
-  const adjDod   = metal === 'pt' ? -4.75 : 0.00;
+  const adjToday = metal === 'pt' ? -1.00 : 0.50;
+  const adjDod   = metal === 'pt' ? -4.75 : 0.00;  // T-2 unchanged
   const adjWow   = metal === 'pt' ? -5.50 : -0.50;
 
   // Recalculate Fwd $ using act/360: Fwd = Spot x (1 + adj%/100 x days/360)
@@ -970,8 +1079,18 @@ function fillGauge(metal, d) {
     const parts = dateStr.split('-');
     return parts.length === 3 ? '('+parts[2]+'-'+parts[1]+')' : '';
   }
+  // Compute T-2 date as 2 business days before date_today (client-side fallback)
+  function prevBizDays(dateStr, n) {
+    if (!dateStr) return null;
+    let dt = new Date(dateStr); let count = 0;
+    while (count < n) { dt.setDate(dt.getDate()-1); if(dt.getDay()!==0&&dt.getDay()!==6) count++; }
+    const dd = String(dt.getDate()).padStart(2,'0');
+    const mm = String(dt.getMonth()+1).padStart(2,'0');
+    return '('+dd+'-'+mm+')';
+  }
+  const dodLabel = d.date_dod ? fmtDdMm(d.date_dod) : prevBizDays(d.date_today, 2);
   set(metal+'-th-today', 'Today '+fmtDdMm(d.date_today));
-  set(metal+'-th-dod',   'T-2');
+  set(metal+'-th-dod',   'T-2 '+dodLabel);
   set(metal+'-th-wow',   'Last Wk');
   set(metal+'-bd-gfex',     fmtG(settle));
   set(metal+'-bd-gfex-dod', fmtG(gfexDod));
@@ -1129,6 +1248,13 @@ function buildCharts(commodity) {
   document.getElementById('vol-kpi').textContent=fmt(last.volume);
   document.getElementById('oi-kpi').textContent=fmt(last.oi);
 
+  // Volume chart disclaimer
+  const volDiscEl = document.getElementById('vol-disclaimer');
+  if (volDiscEl) {
+    volDiscEl.style.display = 'block';
+    volDiscEl.innerHTML = '📈 <b>15 Dec 2025:</b> The Jun-26 contract saw a significant rise in volume as the Dec-25 contract became its first trading day — at that point only Jun, Aug and Oct contracts were live. The <b>Feb-26 contract launched 24 Feb</b> but did not produce the same price impact. <b>Next up: Jun-27 contract launches in Jun 2026</b> — watch for a similar dynamic when the next new contract goes live.';
+  }
+
   if(candleChart){candleChart.destroy();candleChart=null;}
   if(volChart){volChart.destroy();volChart=null;}
   if(oiChart){oiChart.destroy();oiChart=null;}
@@ -1164,8 +1290,8 @@ function buildCharts(commodity) {
   const disclaimerEl = document.getElementById('candle-disclaimer');
   if (disclaimerEl) {
     disclaimerEl.style.display = 'block';
-    const ptMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.';
-    const pdMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement.';
+    const ptMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 8 AM London fix, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.';
+    const pdMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 8 AM London fix, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement.';
     const noDataMsg = 'Premium/discount overlay not available — run the workflow to generate historical spot data.';
     if (commodity === 'platinum') {
       disclaimerEl.innerHTML = hasPremium ? ptMsg : noDataMsg;
@@ -1390,7 +1516,7 @@ function buildCustomData(ptToday, ptDod, ptWow, pdToday, pdDod, pdWow) {
   const custom = JSON.parse(JSON.stringify(pgmxData));
   if (ptToday) {
     custom.pt_spot_usd_oz = ptToday;
-    const r = calcPremiumJS(pgmxData.pt_gfex_settle_cny_g, ptToday, pgmxData.cny_usd_rate, -4.75, pgmxData.date_today);
+    const r = calcPremiumJS(pgmxData.pt_gfex_settle_cny_g, ptToday, pgmxData.cny_usd_rate, -1.00, pgmxData.date_today);
     if (r) { custom.pt_premium_usd_oz = r.premUsd; custom.pt_premium_pct = r.premPct; custom.pt_fwd_usd_oz = r.fwdUsdOz; }
   }
   if (ptDod) {
@@ -1405,7 +1531,7 @@ function buildCustomData(ptToday, ptDod, ptWow, pdToday, pdDod, pdWow) {
   }
   if (pdToday) {
     custom.pd_spot_usd_oz = pdToday;
-    const r = calcPremiumJS(pgmxData.pd_gfex_settle_cny_g, pdToday, pgmxData.cny_usd_rate, 0.00, pgmxData.date_today);
+    const r = calcPremiumJS(pgmxData.pd_gfex_settle_cny_g, pdToday, pgmxData.cny_usd_rate, 0.50, pgmxData.date_today);
     if (r) { custom.pd_premium_usd_oz = r.premUsd; custom.pd_premium_pct = r.premPct; custom.pd_fwd_usd_oz = r.fwdUsdOz; }
   }
   if (pdDod) {
@@ -1478,6 +1604,79 @@ function resetToApiSpot() {
   document.getElementById('spot-status').className = 'spot-status';
   setTimeout(closeSpotModal, 800);
 }
+
+
+// ── KEY DATES CALENDAR ───────────────────────────────────────────────────────
+const KEY_DATES = {
+  '2026-05-12': 'Last trading day of Jun-26 options contract',
+  '2026-06-01': 'First delivery day of Jun-26 contract',
+  '2026-06-12': 'Last trading day of Jun-26 contract',
+  '2026-06-17': 'Last delivery day of Jun-26 contract',
+};
+
+function buildKdMonth(year, month) {
+  // month is 0-indexed
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dows = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const firstDay = new Date(year, month, 1);
+  // getDay(): 0=Sun,1=Mon...6=Sat — convert to Mon-first
+  const startDow = (firstDay.getDay() + 6) % 7; // 0=Mon
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+
+  let html = `<div>
+    <div class="kdcal-month-title">${monthNames[month]} ${year}</div>
+    <div class="kdcal-grid">`;
+
+  // Day-of-week headers
+  dows.forEach(d => { html += `<div class="kdcal-dow">${d}</div>`; });
+
+  // Empty cells before first day
+  for (let i = 0; i < startDow; i++) {
+    html += `<div class="kdcal-day empty"></div>`;
+  }
+
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm = String(month+1).padStart(2,'0');
+    const dd = String(d).padStart(2,'0');
+    const key = `${year}-${mm}-${dd}`;
+    const isKey = KEY_DATES[key] != null;
+    if (isKey) {
+      html += `<div class="kdcal-day key-date" data-key="${key}" onmouseenter="showKdTip(event,'${key}')" onmouseleave="hideKdTip()">
+        <div class="kdcal-dot">${d}</div>
+      </div>`;
+    } else {
+      html += `<div class="kdcal-day has-date">${d}</div>`;
+    }
+  }
+
+  html += `</div></div>`;
+  return html;
+}
+
+function openKdCal() {
+  const container = document.getElementById('kdCalMonths');
+  container.innerHTML = buildKdMonth(2026, 4) + buildKdMonth(2026, 5); // May + June
+  document.getElementById('kdCalOverlay').classList.add('open');
+}
+function closeKdCal() { document.getElementById('kdCalOverlay').classList.remove('open'); }
+function handleKdOverlay(e) { if (e.target === document.getElementById('kdCalOverlay')) closeKdCal(); }
+
+function showKdTip(e, key) {
+  const tip = document.getElementById('kdTooltip');
+  const label = KEY_DATES[key];
+  if (!label) return;
+  const parts = key.split('-');
+  const dateStr = `${parseInt(parts[2])} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(parts[1])-1]} ${parts[0]}`;
+  tip.innerHTML = `<b style="color:var(--neon-purple)">${dateStr}</b><br>${label}`;
+  const rect = e.target.closest('.kdcal-day').getBoundingClientRect();
+  tip.style.left = (rect.left + window.scrollX + rect.width/2 - 110) + 'px';
+  tip.style.top  = (rect.top + window.scrollY - 72) + 'px';
+  tip.classList.add('visible');
+}
+function hideKdTip() { document.getElementById('kdTooltip').classList.remove('visible'); }
+
+document.addEventListener('keydown', e => { if(e.key==='Escape') { closeKdCal(); } });
 
 </script>
 </body>
