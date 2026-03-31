@@ -204,28 +204,29 @@ jobs:
               return pt_spot, pd_spot, cny_usd
 
           def fetch_spot_series(dates, api_key):
-              """Fetch daily PT spot prices and CNY/USD for a list of dates.
-              Returns dict: {date_str: (pt_spot, cny_usd)}
-              Skips dates where API returns no data (holidays, weekends).
-              Uses 1 API call per date — batches are not supported by metalpriceapi."""
+              """Fetch daily PT and PD spot prices and CNY/USD for a list of dates.
+              Returns dict: {date_str: (pt_spot, pd_spot, cny_usd)}
+              Fetches XPT and XPD in a single API call per date to conserve quota.
+              Skips dates where API returns no data (holidays, weekends)."""
               result = {}
               for date_str in dates:
                   try:
                       r = requests.get(
-                          f"https://api.metalpriceapi.com/v1/{date_str}?api_key={api_key}&base=USD&currencies=XPT",
+                          f"https://api.metalpriceapi.com/v1/{date_str}?api_key={api_key}&base=USD&currencies=XPT,XPD",
                           timeout=15)
                       r.raise_for_status()
                       data = r.json()
                       if data.get("success"):
                           xpt = data["rates"].get("XPT")
-                          if xpt:
-                              pt_spot = round(1.0 / float(xpt), 2)
-                              # FX rate
+                          xpd = data["rates"].get("XPD")
+                          if xpt or xpd:
+                              pt_spot = round(1.0 / float(xpt), 2) if xpt else None
+                              pd_spot = round(1.0 / float(xpd), 2) if xpd else None
                               fx = requests.get(
                                   f"https://api.frankfurter.dev/v1/{date_str}?base=CNY&symbols=USD",
                                   timeout=10)
                               cny = float(fx.json()["rates"]["USD"]) if fx.ok else None
-                              result[date_str] = (pt_spot, cny)
+                              result[date_str] = (pt_spot, pd_spot, cny)
                   except Exception:
                       pass  # skip silently — holiday or weekend
               print(f"  Historical spot: fetched {len(result)} of {len(dates)} dates")
@@ -334,9 +335,12 @@ jobs:
               # Fetch daily spot series for premium overlay on candlestick chart
               api_key_series = os.environ.get("METALS_API_KEY", "")
               cs_pt_temp = get_candlestick(conn, "Platinum")
+              cs_pd_temp = get_candlestick(conn, "Palladium")
               pt_dates = [d["date"] for d in cs_pt_temp["data"]] if cs_pt_temp else []
-              print(f"Fetching historical spot series for {len(pt_dates)} dates...")
-              spot_series = fetch_spot_series(pt_dates, api_key_series) if api_key_series else {}
+              pd_dates = [d["date"] for d in cs_pd_temp["data"]] if cs_pd_temp else []
+              all_dates = sorted(set(pt_dates) | set(pd_dates))
+              print(f"Fetching historical spot series for {len(all_dates)} dates...")
+              spot_series = fetch_spot_series(all_dates, api_key_series) if api_key_series else {}
 
               # Get GFEX settles for today, DoD, WoW
               def get_settle(cs_data, date_str):
@@ -378,26 +382,41 @@ jobs:
 
               usd_cny = round(1.0 / cny_usd, 4) if cny_usd else None
 
-              # Build premium series: for each date with both GFEX settle and spot
+              # Build PT and PD premium series: for each date with both GFEX settle and spot
               pt_premium_series = []
+              pd_premium_series = []
+
               if cs_pt_temp and cs_pt_temp["data"]:
                   for row in cs_pt_temp["data"]:
                       date_str = row["date"]
                       settle   = row.get("settle") or row.get("close")
                       if settle and date_str in spot_series:
-                          pt_spot_d, cny_usd_d = spot_series[date_str]
+                          pt_spot_d, pd_spot_d, cny_usd_d = spot_series[date_str]
                           if pt_spot_d and cny_usd_d:
                               gfex_usd = round(settle * cny_usd_d * TROY_OZ / VAT_FACTOR, 2)
                               prem_usd = round(gfex_usd - pt_spot_d, 2)
                               prem_pct = round((gfex_usd - pt_spot_d) / pt_spot_d * 100, 2)
                               pt_premium_series.append({
-                                  "date":     date_str,
-                                  "gfex_usd": gfex_usd,
-                                  "spot":     pt_spot_d,
-                                  "prem_usd": prem_usd,
-                                  "prem_pct": prem_pct,
+                                  "date": date_str, "gfex_usd": gfex_usd,
+                                  "spot": pt_spot_d, "prem_usd": prem_usd, "prem_pct": prem_pct,
                               })
-              print(f"  Premium series: {len(pt_premium_series)} data points")
+
+              if cs_pd_temp and cs_pd_temp["data"]:
+                  for row in cs_pd_temp["data"]:
+                      date_str = row["date"]
+                      settle   = row.get("settle") or row.get("close")
+                      if settle and date_str in spot_series:
+                          pt_spot_d, pd_spot_d, cny_usd_d = spot_series[date_str]
+                          if pd_spot_d and cny_usd_d:
+                              gfex_usd = round(settle * cny_usd_d * TROY_OZ / VAT_FACTOR, 2)
+                              prem_usd = round(gfex_usd - pd_spot_d, 2)
+                              prem_pct = round((gfex_usd - pd_spot_d) / pd_spot_d * 100, 2)
+                              pd_premium_series.append({
+                                  "date": date_str, "gfex_usd": gfex_usd,
+                                  "spot": pd_spot_d, "prem_usd": prem_usd, "prem_pct": prem_pct,
+                              })
+
+              print(f"  PT premium series: {len(pt_premium_series)} | PD premium series: {len(pd_premium_series)} data points")
 
               output = {
                   "generated":             datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
@@ -443,6 +462,7 @@ jobs:
                   "pd_premium_usd_oz_wow": pd_prem_usd_wow,
                   "pd_premium_pct_wow":    pd_prem_pct_wow,
                   "pt_premium_series":     pt_premium_series,
+                  "pd_premium_series":     pd_premium_series,
               }
               for commodity in ("Platinum", "Palladium"):
                   key = commodity.lower()
