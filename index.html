@@ -496,7 +496,7 @@
     </div>
     <div class="key-dates-area">
       <div>
-        <div class="delivery-label">First Delivery</div>
+        <div class="delivery-label">First Notice Date</div>
         <div class="delivery-date">01 Jun 2026</div>
       </div>
       <button class="key-dates-btn" onclick="openKdCal()">Key Dates ▾</button>
@@ -1252,7 +1252,7 @@ function buildCharts(commodity) {
   const volDiscEl = document.getElementById('vol-disclaimer');
   if (volDiscEl) {
     volDiscEl.style.display = 'block';
-    volDiscEl.innerHTML = '📈 <b>15 Dec 2025:</b> The Jun-26 contract saw a significant rise in volume as the Dec-25 contract became its first trading day — at that point only Jun, Aug and Oct contracts were live. The <b>Feb-26 contract launched 24 Feb</b> but did not produce the same price impact. <b>Next up: Jun-27 contract launches in Jun 2026</b> — watch for a similar dynamic when the next new contract goes live.';
+    volDiscEl.innerHTML = '📈 <b>15 Dec 2025:</b> The Jun-26 contract saw a significant rise in volume when the Dec-25 contract went live — up to that point only Jun, Aug and Oct contracts were live. The <b>Feb-26 contract launched 24 Feb</b> but did not produce the same price impact. <b>Next up: Jun-27 contract launches in Jun 2026</b> — watch for a similar dynamic when the next new contract goes live.';
   }
 
   if(candleChart){candleChart.destroy();candleChart=null;}
