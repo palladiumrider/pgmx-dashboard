@@ -339,8 +339,35 @@ jobs:
               pt_dates = [d["date"] for d in cs_pt_temp["data"]] if cs_pt_temp else []
               pd_dates = [d["date"] for d in cs_pd_temp["data"]] if cs_pd_temp else []
               all_dates = sorted(set(pt_dates) | set(pd_dates))
-              print(f"Fetching historical spot series for {len(all_dates)} dates...")
-              spot_series = fetch_spot_series(all_dates, api_key_series) if api_key_series else {}
+
+              # Load existing spot cache to avoid re-fetching already retrieved dates
+              CACHE_PATH = Path("data/spot-cache.json")
+              spot_cache = {}
+              if CACHE_PATH.exists():
+                  try:
+                      with open(CACHE_PATH) as f:
+                          spot_cache = json.load(f)
+                      print(f"  Spot cache loaded: {len(spot_cache)} dates cached")
+                  except Exception as e:
+                      print(f"  Spot cache load failed: {e}")
+
+              # Only fetch dates not already in cache
+              missing_dates = [d for d in all_dates if d not in spot_cache]
+              print(f"Fetching historical spot series: {len(missing_dates)} new dates of {len(all_dates)} total...")
+
+              if missing_dates and api_key_series:
+                  new_data = fetch_spot_series(missing_dates, api_key_series)
+                  # Merge new data into cache — convert tuple to dict for JSON storage
+                  for date_str, vals in new_data.items():
+                      spot_cache[date_str] = {"pt": vals[0], "pd": vals[1], "cny": vals[2]}
+                  # Save updated cache back to file
+                  CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+                  with open(CACHE_PATH, "w") as f:
+                      json.dump(spot_cache, f, indent=2)
+                  print(f"  Spot cache saved: {len(spot_cache)} dates total")
+
+              # Convert cache back to tuple format expected by premium series builder
+              spot_series = {d: (v["pt"], v["pd"], v["cny"]) for d, v in spot_cache.items() if d in all_dates}
 
               # Get GFEX settles for today, DoD, WoW
               def get_settle(cs_data, date_str):
