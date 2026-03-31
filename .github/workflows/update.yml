@@ -2,9 +2,7 @@ name: Update GFEX PGM Data
 
 on:
   schedule:
-    # 8am London time = 8am UTC (winter) / 7am UTC (summer, BST)
-    # Run at both 7am and 8am UTC to cover both GMT and BST
-    - cron: '0 7 * * 1-5'
+    # 8am UTC = 9am London during BST (summer) / 8am London during GMT (winter)
     - cron: '0 8 * * 1-5'
   workflow_dispatch: # allows manual trigger from GitHub UI
 
