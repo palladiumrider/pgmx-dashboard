@@ -787,11 +787,14 @@ function populateStats(data, commodity='platinum') {
 const gaugeMode = { pt: 'pct', pd: 'pct' };
 
 function arcDash(r, pct, maxPct) {
-  const circ    = 2 * Math.PI * r;
-  const maxDeg  = r === 56 ? 263 : r === 44 ? 207 : 151;
+  // Use the inner ring (r=32, maxDeg=151) as a shared reference so arc length
+  // is purely proportional to pct across all three rings. A +10% on the outer
+  // ring draws the same physical length as +10% on the inner ring.
+  const refCirc = 2 * Math.PI * 32;
   const clipped = Math.max(-maxPct, Math.min(maxPct, pct));
   const frac    = (clipped + maxPct) / (maxPct * 2);
-  const arcLen  = frac * (circ * maxDeg / 360);
+  const arcLen  = frac * (refCirc * 151 / 360);
+  const circ    = 2 * Math.PI * r;
   return arcLen + ' ' + (circ - arcLen);
 }
 
