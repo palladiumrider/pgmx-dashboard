@@ -74,6 +74,7 @@
   .tab-btn { font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; padding:8px 20px; border-radius:2px; cursor:pointer; border:1px solid var(--border); background:var(--surface); color:var(--muted); transition:all 0.18s; }
   .tab-btn.active { background:rgba(0,200,255,0.1); border-color:var(--neon-blue); color:var(--neon-blue); }
   .tab-btn.active-range { background:rgba(179,71,255,0.12); border-color:var(--neon-purple); color:var(--neon-purple); }
+  .tab-btn.active-freq  { background:rgba(0,200,255,0.1); border-color:var(--neon-blue); color:var(--neon-blue); }
   .tab-btn:hover:not(.active) { border-color:var(--muted); color:var(--text); }
   .charts-wrap { opacity:0; transform:translateY(18px); animation:fadeUp 0.55s ease forwards 0.5s; }
   .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:26px; position:relative; overflow:hidden; margin-bottom:20px; }
@@ -493,6 +494,9 @@
     <button class="tab-btn active" onclick="switchTab('platinum')">Platinum</button>
     <button class="tab-btn" onclick="switchTab('palladium')">Palladium</button>
     <div style="flex:1"></div>
+    <button class="freq-btn tab-btn active-freq" onclick="setFreq('daily')">Daily</button>
+    <button class="freq-btn tab-btn" onclick="setFreq('weekly')">Weekly</button>
+    <div style="width:1px;background:var(--border);margin:0 6px;align-self:stretch"></div>
     <button class="range-btn tab-btn" onclick="setRange(10)">2W</button>
     <button class="range-btn tab-btn" onclick="setRange(22)">1M</button>
     <button class="range-btn tab-btn active-range" onclick="setRange(44)">2M</button>
@@ -505,7 +509,7 @@
       <div class="chart-header">
         <div>
           <div class="chart-title" id="candle-title">— Daily OHLC · Last 90 Sessions</div>
-          <div class="chart-sub">GFEX FRONT MONTH · CNY/G · SETTLE PRICE</div>
+          <div class="chart-sub" id="candle-sub">GFEX FRONT MONTH · CNY/G · SETTLE PRICE</div>
         </div>
         <div>
           <div class="chart-kpi" id="candle-kpi" style="color:var(--neon-blue)">—</div>
@@ -682,7 +686,7 @@ Chart.defaults.font.family="'DM Mono', monospace";
 Chart.defaults.font.size=11;
 const gridCol='rgba(26,32,53,0.9)';
 
-let candleChart=null, volChart=null, oiChart=null, pgmxData=null, activeTab='platinum', activeRange=44;
+let candleChart=null, volChart=null, oiChart=null, pgmxData=null, activeTab='platinum', activeRange=44, activeFreq='daily';
 
 const fmt  = n => n!=null ? Number(n).toLocaleString() : '—';
 const fmtP = n => { if(n==null) return '—'; return (n>0?'▲ +':'▼ ')+Math.abs(n).toFixed(2)+'%'; };
@@ -991,16 +995,68 @@ const wickPlugin = {
   }
 };
 
+
+// ── WEEKLY AGGREGATION ────────────────────────────────────────────────────────
+function rollWeekly(dailyData) {
+  const weeks = [];
+  let week = null;
+  dailyData.forEach(d => {
+    const date  = new Date(d.date);
+    const mon   = new Date(date);
+    mon.setDate(date.getDate() - ((date.getDay() + 6) % 7)); // Monday of this week
+    const weekKey = mon.toISOString().slice(0, 10);
+    if (!week || week.key !== weekKey) {
+      if (week) weeks.push(week);
+      week = {
+        key:    weekKey,
+        date:   weekKey,
+        open:   d.open,
+        high:   d.high,
+        low:    d.low,
+        close:  d.close,
+        settle: d.settle ?? d.close,
+        volume: d.volume ?? 0,
+        oi:     d.oi ?? 0,
+      };
+    } else {
+      week.high   = Math.max(week.high, d.high);
+      week.low    = Math.min(week.low,  d.low);
+      week.close  = d.close;
+      week.settle = d.settle ?? d.close;
+      week.volume = (week.volume ?? 0) + (d.volume ?? 0);
+      week.oi     = d.oi ?? week.oi;
+    }
+  });
+  if (week) weeks.push(week);
+  return weeks;
+}
+
+function setFreq(freq) {
+  activeFreq = freq;
+  document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active-freq'));
+  event.target.classList.add('active-freq');
+  if (pgmxData) buildCharts(activeTab);
+}
+
 // ── BUILD CHARTS ─────────────────────────────────────────────────────────────
 function buildCharts(commodity) {
   const cs=pgmxData[commodity].candlestick, contract=cs.contract.toUpperCase();
-  const allDays=cs.data, days=activeRange==='launch'?allDays.filter(d=>d.date>='2025-11-27'):allDays.slice(-activeRange);
+  const allDailyData=cs.data;
+  const allData = activeFreq === 'weekly' ? rollWeekly(allDailyData) : allDailyData;
+  // For weekly mode the range buttons refer to weeks not days, so scale accordingly
+  const rangeN = activeFreq === 'weekly'
+    ? (activeRange === 'launch' ? 'launch' : Math.ceil(activeRange / 5))
+    : activeRange;
+  const days = rangeN === 'launch'
+    ? allData.filter(d => d.date >= '2025-11-27')
+    : allData.slice(-rangeN);
   const last=days[days.length-1], prev=days[days.length-2];
 
-  const rangeLabel=activeRange==='launch'?'Since Launch (27 Nov 2025)':activeRange===10?'Last 2 Weeks':activeRange===22?'Last Month':activeRange===44?'Last 2 Months':'Last 3 Months';
-  document.getElementById('candle-title').textContent=`${contract} — Daily OHLC · ${rangeLabel}`;
-  document.getElementById('vol-title').textContent=`${contract} — Volume · ${rangeLabel}`;
-  document.getElementById('oi-chart-title').textContent=`${contract} — Open Interest · ${rangeLabel}`;
+  const freqLabel  = activeFreq === 'weekly' ? 'Weekly' : 'Daily';
+  const rangeLabel = activeRange==='launch'?'Since Launch (27 Nov 2025)':activeRange===10?'Last 2 Weeks':activeRange===22?'Last Month':activeRange===44?'Last 2 Months':'Last 3 Months';
+  document.getElementById('candle-title').textContent=`${contract} — ${freqLabel} OHLC · ${rangeLabel}`;
+  document.getElementById('vol-title').textContent=`${contract} — ${freqLabel} Volume · ${rangeLabel}`;
+  document.getElementById('oi-chart-title').textContent=`${contract} — ${freqLabel} Open Interest · ${rangeLabel}`;
 
 
 
