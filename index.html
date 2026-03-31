@@ -612,7 +612,7 @@
       <div class="session-time">13:30 – 15:00 · Beijing Time</div>
     </div>
   </div>
-  <div class="no-session-banner" id="noSessionBanner"></div>
+  <div id="noSessionBanner" style="display:none"></div>
 
   <div style="font-family:'DM Mono',monospace;font-size:0.78rem;font-weight:700;color:var(--neon-orange);line-height:1.8;margin-top:28px;padding:20px 24px;border:1px solid var(--border);border-left:3px solid var(--neon-orange);background:rgba(255,140,0,0.04);border-radius:2px;">
     📌 <b>31 Mar, 11 am London:</b> PGM premiums in GFEX are rising since the drop on 23-Mar. However, we have yet to see a notable jump in activity on any contract. Note Palladium premium, trading back to 29-Jan levels.
@@ -1899,24 +1899,7 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') { closeKdCal();
       }
     });
 
-    // No-session banner
-    if (liveIdx === -1) {
-      banner.style.display = 'block';
-      const s = SESSIONS[nextIdx];
-      const totalSecs = Math.max(0, Math.round(minsToNext * 60 - nowS));
-      const days = Math.floor(totalSecs / 86400);
-      const hrs  = Math.floor((totalSecs % 86400) / 3600);
-      const mm   = Math.floor((totalSecs % 3600) / 60);
-      const ss   = totalSecs % 60;
-      let parts = [];
-      if (days > 0) parts.push(`<span class="countdown-val">${days}</span>d`);
-      if (hrs  > 0 || days > 0) parts.push(`<span class="countdown-val">${hrs}</span>h`);
-      parts.push(`<span class="countdown-val">${String(mm).padStart(2,'0')}</span>m`);
-      if (days === 0) parts.push(`<span class="countdown-val">${String(ss).padStart(2,'0')}</span>s`);
-      banner.innerHTML = `No session in progress &nbsp;·&nbsp; Next: <span class="next-label">${s.name} (${s.start[0]}:${String(s.start[1]).padStart(2,'0')} Beijing)</span> starts in ${parts.join(' ')}`;
-    } else {
-      banner.style.display = 'none';
-    }
+
   }
 
   updateSessions();
