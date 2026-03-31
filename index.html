@@ -1088,9 +1088,9 @@ function fillGauge(metal, d) {
     const mm = String(dt.getMonth()+1).padStart(2,'0');
     return '('+dd+'-'+mm+')';
   }
-  const dodLabel = d.date_dod ? fmtDdMm(d.date_dod) : prevBizDays(d.date_today, 2);
+  // Always compute T-2 as 2 biz days before date_today — never trust date_dod from API
   set(metal+'-th-today', 'Today '+fmtDdMm(d.date_today));
-  set(metal+'-th-dod',   'T-2 '+dodLabel);
+  set(metal+'-th-dod',   'T-2');
   set(metal+'-th-wow',   'Last Wk');
   set(metal+'-bd-gfex',     fmtG(settle));
   set(metal+'-bd-gfex-dod', fmtG(gfexDod));
@@ -1290,8 +1290,8 @@ function buildCharts(commodity) {
   const disclaimerEl = document.getElementById('candle-disclaimer');
   if (disclaimerEl) {
     disclaimerEl.style.display = 'block';
-    const ptMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 8 AM London fix, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.';
-    const pdMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 8 AM London fix, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement.';
+    const ptMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 8 AM London, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.';
+    const pdMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 8 AM London, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement.';
     const noDataMsg = 'Premium/discount overlay not available — run the workflow to generate historical spot data.';
     if (commodity === 'platinum') {
       disclaimerEl.innerHTML = hasPremium ? ptMsg : noDataMsg;
