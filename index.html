@@ -75,6 +75,42 @@
   .tab-btn.active { background:rgba(0,200,255,0.1); border-color:var(--neon-blue); color:var(--neon-blue); }
   .tab-btn.active-range { background:rgba(179,71,255,0.12); border-color:var(--neon-purple); color:var(--neon-purple); }
   .tab-btn.active-freq  { background:rgba(0,200,255,0.1); border-color:var(--neon-blue); color:var(--neon-blue); }
+
+  /* ── FREQ TOGGLE PILL ── */
+  .freq-pill {
+    display:flex; align-items:center;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:30px; padding:3px; gap:0;
+    position:relative; flex-shrink:0;
+  }
+  .freq-pill-opt {
+    position:relative; z-index:1;
+    font-family:'Bebas Neue',sans-serif; font-size:0.85rem; letter-spacing:0.18em;
+    padding:5px 18px; border-radius:26px; cursor:pointer; border:none;
+    background:transparent; color:var(--muted);
+    transition:color 0.25s;
+    display:flex; align-items:center; gap:6px;
+  }
+  .freq-pill-opt .freq-icon {
+    font-size:0.6rem; opacity:0.7;
+    font-family:'DM Mono',monospace; letter-spacing:0.05em;
+  }
+  .freq-pill-opt.daily-active  { color:#fff; }
+  .freq-pill-opt.weekly-active { color:#fff; }
+  .freq-pill-glider {
+    position:absolute; top:3px; bottom:3px;
+    border-radius:26px;
+    transition:left 0.28s cubic-bezier(.4,0,.2,1), width 0.28s cubic-bezier(.4,0,.2,1), background 0.28s;
+    pointer-events:none; z-index:0;
+  }
+  .freq-pill[data-freq="daily"]  .freq-pill-glider {
+    background:linear-gradient(120deg,var(--neon-blue),var(--neon-purple));
+    box-shadow:0 0 14px rgba(0,200,255,0.45);
+  }
+  .freq-pill[data-freq="weekly"] .freq-pill-glider {
+    background:linear-gradient(120deg,var(--neon-green),var(--neon-blue));
+    box-shadow:0 0 14px rgba(0,255,136,0.45);
+  }
   .tab-btn:hover:not(.active) { border-color:var(--muted); color:var(--text); }
   .charts-wrap { opacity:0; transform:translateY(18px); animation:fadeUp 0.55s ease forwards 0.5s; }
   .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:26px; position:relative; overflow:hidden; margin-bottom:20px; }
@@ -490,19 +526,30 @@
   </div>
 
   <div class="section-title">Market Charts</div>
-  <div class="tab-row">
+  <div class="tab-row" style="align-items:center;">
+
+    <!-- ── Freq pill toggle ── -->
+    <div class="freq-pill" id="freqPill" data-freq="daily">
+      <div class="freq-pill-glider" id="freqGlider"></div>
+      <button class="freq-pill-opt daily-active" id="freq-daily" onclick="setFreq('daily')">
+        <span class="freq-icon">▐▌▐▌</span>D
+      </button>
+      <button class="freq-pill-opt" id="freq-weekly" onclick="setFreq('weekly')">
+        W<span class="freq-icon">▐━━▌</span>
+      </button>
+    </div>
+
+    <div style="width:1px;background:var(--border);height:20px;margin:0 4px"></div>
+
     <button class="tab-btn active" onclick="switchTab('platinum')">Platinum</button>
     <button class="tab-btn" onclick="switchTab('palladium')">Palladium</button>
     <div style="flex:1"></div>
-    <button class="freq-btn tab-btn active-freq" onclick="setFreq('daily')">Daily</button>
-    <button class="freq-btn tab-btn" onclick="setFreq('weekly')">Weekly</button>
-    <div style="width:1px;background:var(--border);margin:0 6px;align-self:stretch"></div>
     <button class="range-btn tab-btn" onclick="setRange(10)">2W</button>
     <button class="range-btn tab-btn" onclick="setRange(22)">1M</button>
     <button class="range-btn tab-btn active-range" onclick="setRange(44)">2M</button>
     <button class="range-btn tab-btn" onclick="setRange(66)">3M</button>
     <button class="range-btn tab-btn" onclick="setRange('launch')">SINCE LAUNCH</button>
-    </div>
+  </div>
 
   <div class="charts-wrap">
     <div class="chart-card blue-stripe">
@@ -1033,8 +1080,22 @@ function rollWeekly(dailyData) {
 
 function setFreq(freq) {
   activeFreq = freq;
-  document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active-freq'));
-  event.target.classList.add('active-freq');
+  const pill    = document.getElementById('freqPill');
+  const daily   = document.getElementById('freq-daily');
+  const weekly  = document.getElementById('freq-weekly');
+  const glider  = document.getElementById('freqGlider');
+  pill.dataset.freq = freq;
+  if (freq === 'daily') {
+    daily.classList.add('daily-active');
+    weekly.classList.remove('weekly-active');
+    glider.style.left  = daily.offsetLeft + 'px';
+    glider.style.width = daily.offsetWidth + 'px';
+  } else {
+    weekly.classList.add('weekly-active');
+    daily.classList.remove('daily-active');
+    glider.style.left  = weekly.offsetLeft + 'px';
+    glider.style.width = weekly.offsetWidth + 'px';
+  }
   if (pgmxData) buildCharts(activeTab);
 }
 
@@ -1292,6 +1353,16 @@ function handleSpotOverlay(e) {
 }
 
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeSpotModal(); });
+
+// Initialise freq glider position once DOM is ready
+window.addEventListener('load', () => {
+  const daily  = document.getElementById('freq-daily');
+  const glider = document.getElementById('freqGlider');
+  if (daily && glider) {
+    glider.style.left  = daily.offsetLeft + 'px';
+    glider.style.width = daily.offsetWidth + 'px';
+  }
+});
 
 function calcPremiumJS(gfexCnyG, spotUsdOz, cnyUsd, fwdAdj, tradeDateStr) {
   if (!gfexCnyG || !spotUsdOz || !cnyUsd) return null;
