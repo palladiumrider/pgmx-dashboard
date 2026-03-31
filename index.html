@@ -839,7 +839,7 @@ function fillGauge(metal, d) {
   // Data rows — use safe set helper for all
   if (usdCny) { const el=document.getElementById(metal+'-cny-val'); if(el) el.textContent=usdCny.toFixed(4); }
   // Breakdown table
-  const fmtG = v => v != null ? v.toFixed(2)+' CNY/g' : '—';
+  const fmtG = v => v != null ? v.toFixed(2) : '—';
   const fmtS = v => v != null ? '$'+v.toFixed(1) : '—';
   const fmtM = v => v != null ? (v>0?'+':'')+v.toFixed(1)+'%' : '—';
 
