@@ -372,39 +372,31 @@
 
     <!-- Platinum gauge -->
     <div class="gauge-card pt-card">
-      <svg class="gauge-svg" id="pt-gauge-svg" width="130" height="130" viewBox="0 0 130 130"
-           style="cursor:pointer" onclick="toggleGaugeMode('pt')" title="Click to toggle % / USD">
-        <!-- Track rings -->
-        <circle cx="65" cy="65" r="56" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="263 87" stroke-dashoffset="61" stroke-linecap="round"/>
-        <circle cx="65" cy="65" r="44" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="207 69" stroke-dashoffset="48" stroke-linecap="round"/>
-        <circle cx="65" cy="65" r="32" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="151 51" stroke-dashoffset="35" stroke-linecap="round"/>
-        <!-- Outer arc = WoW -->
-        <circle id="pt-arc-wow" cx="65" cy="65" r="56" fill="none" stroke="#4a5580" stroke-width="6"
-          stroke-dasharray="0 350" stroke-dashoffset="61" stroke-linecap="round"
-          style="transition:stroke-dasharray 1.2s ease,stroke 0.4s"/>
-        <!-- Middle arc = DoD -->
-        <circle id="pt-arc-dod" cx="65" cy="65" r="44" fill="none" stroke="#4a5580" stroke-width="6"
-          stroke-dasharray="0 276" stroke-dashoffset="48" stroke-linecap="round"
-          style="transition:stroke-dasharray 1s ease,stroke 0.4s"/>
-        <!-- Inner arc = Today -->
-        <circle id="pt-arc" cx="65" cy="65" r="32" fill="none" stroke="#00c8ff" stroke-width="6"
-          stroke-dasharray="0 201" stroke-dashoffset="35" stroke-linecap="round"
-          style="transition:stroke-dasharray 0.8s ease,stroke 0.4s"/>
-        <text id="pt-gauge-pct" x="65" y="60" text-anchor="middle" dominant-baseline="central"
-          style="font-family:'Bebas Neue',sans-serif;font-size:16px;fill:#dde8ff">—</text>
-        <text id="pt-gauge-label" x="65" y="76" text-anchor="middle" dominant-baseline="central"
-          style="font-family:'DM Mono',monospace;font-size:7px;fill:#4a5580;letter-spacing:0.1em">TODAY</text>
+      <svg class="gauge-svg" id="pt-gauge-svg" width="130" height="130" viewBox="0 0 130 130">
+        <!-- zero line -->
+        <line x1="8" y1="88" x2="122" y2="88" stroke="#1a2035" stroke-width="1"/>
+        <!-- track bars (background) -->
+        <rect id="pt-bar-wow-track" x="14" y="18" width="28" height="70" rx="2" fill="#0f1422"/>
+        <rect id="pt-bar-dod-track" x="51" y="18" width="28" height="70" rx="2" fill="#0f1422"/>
+        <rect id="pt-bar-track"     x="88" y="18" width="28" height="70" rx="2" fill="#0f1422"/>
+        <!-- value bars -->
+        <rect id="pt-bar-wow" x="14" y="53" width="28" height="0" rx="2" fill="#4a5580" style="transition:all 0.7s ease"/>
+        <rect id="pt-bar-dod" x="51" y="53" width="28" height="0" rx="2" fill="#4a5580" style="transition:all 0.7s ease"/>
+        <rect id="pt-bar"     x="88" y="53" width="28" height="0" rx="2" fill="#00c8ff" style="transition:all 0.7s ease"/>
+        <!-- value labels -->
+        <text id="pt-bar-wow-val" x="28" y="14" text-anchor="middle" style="font-family:'Bebas Neue',sans-serif;font-size:9px;fill:#4a5580">—</text>
+        <text id="pt-bar-dod-val" x="65" y="14" text-anchor="middle" style="font-family:'Bebas Neue',sans-serif;font-size:9px;fill:#4a5580">—</text>
+        <text id="pt-bar-val"     x="102" y="14" text-anchor="middle" style="font-family:'Bebas Neue',sans-serif;font-size:9px;fill:#00c8ff">—</text>
+        <!-- period labels -->
+        <text x="28"  y="100" text-anchor="middle" style="font-family:'DM Mono',monospace;font-size:6.5px;fill:#4a5580;letter-spacing:0.05em">LST WK</text>
+        <text x="65"  y="100" text-anchor="middle" style="font-family:'DM Mono',monospace;font-size:6.5px;fill:#4a5580;letter-spacing:0.05em">T-2</text>
+        <text x="102" y="100" text-anchor="middle" style="font-family:'DM Mono',monospace;font-size:6.5px;fill:#00c8ff;letter-spacing:0.05em">TODAY</text>
       </svg>
       <div class="gauge-info">
         <div class="gauge-metal">PLATINUM · PT2606</div>
         <div class="gauge-prem neu" id="pt-prem-usd">—</div>
         <div class="gauge-word neu" id="pt-prem-word">vs Loco London Fwd</div>
         <div class="gauge-row"><span>USD/CNY</span><span id="pt-cny-val">—</span></div>
-        <div class="gauge-row" style="margin-top:8px">
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#00c8ff;display:inline-block;border-radius:2px"></span>Today</span>
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#4a5580;display:inline-block;border-radius:2px"></span>T-2</span>
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#2a3555;display:inline-block;border-radius:2px"></span>Last Wk</span>
-        </div>
         <table class="breakdown-table">
           <thead><tr><th></th><th id="pt-th-today">Today</th><th id="pt-th-dod">T-2</th><th id="pt-th-wow">Last Wk</th></tr></thead>
           <tbody>
@@ -420,39 +412,31 @@
 
     <!-- Palladium gauge -->
     <div class="gauge-card pd-card">
-      <svg class="gauge-svg" id="pd-gauge-svg" width="130" height="130" viewBox="0 0 130 130"
-           style="cursor:pointer" onclick="toggleGaugeMode('pd')" title="Click to toggle % / USD">
-        <!-- Track rings -->
-        <circle cx="65" cy="65" r="56" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="263 87" stroke-dashoffset="61" stroke-linecap="round"/>
-        <circle cx="65" cy="65" r="44" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="207 69" stroke-dashoffset="48" stroke-linecap="round"/>
-        <circle cx="65" cy="65" r="32" fill="none" stroke="#1a2035" stroke-width="6" stroke-dasharray="151 51" stroke-dashoffset="35" stroke-linecap="round"/>
-        <!-- Outer arc = WoW -->
-        <circle id="pd-arc-wow" cx="65" cy="65" r="56" fill="none" stroke="#4a5580" stroke-width="6"
-          stroke-dasharray="0 350" stroke-dashoffset="61" stroke-linecap="round"
-          style="transition:stroke-dasharray 1.2s ease,stroke 0.4s"/>
-        <!-- Middle arc = DoD -->
-        <circle id="pd-arc-dod" cx="65" cy="65" r="44" fill="none" stroke="#4a5580" stroke-width="6"
-          stroke-dasharray="0 276" stroke-dashoffset="48" stroke-linecap="round"
-          style="transition:stroke-dasharray 1s ease,stroke 0.4s"/>
-        <!-- Inner arc = Today -->
-        <circle id="pd-arc" cx="65" cy="65" r="32" fill="none" stroke="#ff8c00" stroke-width="6"
-          stroke-dasharray="0 201" stroke-dashoffset="35" stroke-linecap="round"
-          style="transition:stroke-dasharray 0.8s ease,stroke 0.4s"/>
-        <text id="pd-gauge-pct" x="65" y="60" text-anchor="middle" dominant-baseline="central"
-          style="font-family:'Bebas Neue',sans-serif;font-size:16px;fill:#dde8ff">—</text>
-        <text id="pd-gauge-label" x="65" y="76" text-anchor="middle" dominant-baseline="central"
-          style="font-family:'DM Mono',monospace;font-size:7px;fill:#4a5580;letter-spacing:0.1em">TODAY</text>
+      <svg class="gauge-svg" id="pd-gauge-svg" width="130" height="130" viewBox="0 0 130 130">
+        <!-- zero line -->
+        <line x1="8" y1="88" x2="122" y2="88" stroke="#1a2035" stroke-width="1"/>
+        <!-- track bars (background) -->
+        <rect id="pd-bar-wow-track" x="14" y="18" width="28" height="70" rx="2" fill="#0f1422"/>
+        <rect id="pd-bar-dod-track" x="51" y="18" width="28" height="70" rx="2" fill="#0f1422"/>
+        <rect id="pd-bar-track"     x="88" y="18" width="28" height="70" rx="2" fill="#0f1422"/>
+        <!-- value bars -->
+        <rect id="pd-bar-wow" x="14" y="53" width="28" height="0" rx="2" fill="#4a5580" style="transition:all 0.7s ease"/>
+        <rect id="pd-bar-dod" x="51" y="53" width="28" height="0" rx="2" fill="#4a5580" style="transition:all 0.7s ease"/>
+        <rect id="pd-bar"     x="88" y="53" width="28" height="0" rx="2" fill="#ff8c00" style="transition:all 0.7s ease"/>
+        <!-- value labels -->
+        <text id="pd-bar-wow-val" x="28" y="14" text-anchor="middle" style="font-family:'Bebas Neue',sans-serif;font-size:9px;fill:#4a5580">—</text>
+        <text id="pd-bar-dod-val" x="65" y="14" text-anchor="middle" style="font-family:'Bebas Neue',sans-serif;font-size:9px;fill:#4a5580">—</text>
+        <text id="pd-bar-val"     x="102" y="14" text-anchor="middle" style="font-family:'Bebas Neue',sans-serif;font-size:9px;fill:#ff8c00">—</text>
+        <!-- period labels -->
+        <text x="28"  y="100" text-anchor="middle" style="font-family:'DM Mono',monospace;font-size:6.5px;fill:#4a5580;letter-spacing:0.05em">LST WK</text>
+        <text x="65"  y="100" text-anchor="middle" style="font-family:'DM Mono',monospace;font-size:6.5px;fill:#4a5580;letter-spacing:0.05em">T-2</text>
+        <text x="102" y="100" text-anchor="middle" style="font-family:'DM Mono',monospace;font-size:6.5px;fill:#ff8c00;letter-spacing:0.05em">TODAY</text>
       </svg>
       <div class="gauge-info">
         <div class="gauge-metal">PALLADIUM · PD2606</div>
         <div class="gauge-prem neu" id="pd-prem-usd">—</div>
         <div class="gauge-word neu" id="pd-prem-word">vs Loco London Fwd</div>
         <div class="gauge-row"><span>USD/CNY</span><span id="pd-cny-val">—</span></div>
-        <div class="gauge-row" style="margin-top:8px">
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#ff8c00;display:inline-block;border-radius:2px"></span>Today</span>
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#4a5580;display:inline-block;border-radius:2px"></span>T-2</span>
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:3px;background:#2a3555;display:inline-block;border-radius:2px"></span>Last Wk</span>
-        </div>
         <table class="breakdown-table">
           <thead><tr><th></th><th id="pd-th-today">Today</th><th id="pd-th-dod">T-2</th><th id="pd-th-wow">Last Wk</th></tr></thead>
           <tbody>
@@ -784,31 +768,6 @@ function populateStats(data, commodity='platinum') {
 }
 
 // ── GAUGE FUNCTIONS (global scope) ───────────────────────────────────────────
-const gaugeMode = { pt: 'pct', pd: 'pct' };
-
-function arcDash(r, pct, maxPct) {
-  // Use the inner ring (r=32, maxDeg=151) as a shared reference so arc length
-  // is purely proportional to pct across all three rings. A +10% on the outer
-  // ring draws the same physical length as +10% on the inner ring.
-  const refCirc = 2 * Math.PI * 32;
-  const clipped = Math.max(-maxPct, Math.min(maxPct, pct));
-  const frac    = (clipped + maxPct) / (maxPct * 2);
-  const arcLen  = frac * (refCirc * 151 / 360);
-  const circ    = 2 * Math.PI * r;
-  return arcLen + ' ' + (circ - arcLen);
-}
-
-function arcColor(pct) {
-  if (pct == null) return '#1a2035';
-  return pct > 0 ? '#00ff88' : pct < 0 ? '#ff2d78' : '#4a5580';
-}
-
-function setArc(id, r, pct) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.setAttribute('stroke-dasharray', pct != null ? arcDash(r, pct, 15) : '0 999');
-  el.setAttribute('stroke', arcColor(pct));
-}
 
 function fillGauge(metal, d) {
   const pct     = d[metal+'_premium_pct'];
@@ -822,20 +781,40 @@ function fillGauge(metal, d) {
   const fwdAdj  = d[metal+'_fwd_adjustment'];
   const usdCny  = d.usd_cny_rate;
 
-  // Draw three concentric arcs
-  setArc(metal+'-arc',     32, pct);
-  setArc(metal+'-arc-dod', 44, pctDod);
-  setArc(metal+'-arc-wow', 56, pctWow);
+  // ── Mini bar chart ─────────────────────────────────────────────────────────
+  // Bars are drawn in an 70px tall track with the zero line at y=88.
+  // Positive values grow upward (y decreases), negative downward.
+  const BAR_ZERO = 88, BAR_MAX_H = 70, MAX_PCT = 15;
+  const accentToday = metal === 'pt' ? '#00c8ff' : '#ff8c00';
 
-  // Centre text
+  function drawBar(barId, valId, val) {
+    const barEl = document.getElementById(metal+'-bar'+barId);
+    const valEl = document.getElementById(metal+'-bar'+barId+'-val');
+    if (!barEl || !valEl) return;
+    const clipped = Math.max(-MAX_PCT, Math.min(MAX_PCT, val ?? 0));
+    const h       = Math.abs(clipped) / MAX_PCT * BAR_MAX_H;
+    const isPos   = clipped >= 0;
+    const col     = val == null ? '#4a5580' : isPos ? '#00ff88' : '#ff2d78';
+    barEl.setAttribute('height', h.toFixed(1));
+    barEl.setAttribute('y', isPos ? (BAR_ZERO - h).toFixed(1) : BAR_ZERO.toString());
+    barEl.setAttribute('fill', barId === '' ? accentToday : col);
+    // for today bar keep accent colour but tint toward green/red
+    if (barId === '') barEl.setAttribute('fill', val == null ? '#4a5580' : isPos ? '#00ff88' : '#ff2d78');
+    const sign = val != null && val > 0 ? '+' : '';
+    valEl.textContent = val != null ? sign+val.toFixed(2)+'%' : '—';
+    valEl.setAttribute('fill', val == null ? '#4a5580' : isPos ? '#00ff88' : '#ff2d78');
+    valEl.setAttribute('y', isPos ? Math.max(11, BAR_ZERO - h - 3).toFixed(1) : (BAR_ZERO + h + 9).toFixed(1));
+  }
+
+  drawBar('',     '',     pct);
+  drawBar('-dod', '-dod', pctDod);
+  drawBar('-wow', '-wow', pctWow);
+
+  // Big number and word (driven by today's value)
   const isUp  = pct > 0, isDown = pct < 0;
   const sign  = isUp ? '+' : '';
   const cls   = isUp ? 'up' : isDown ? 'down' : 'neu';
   const word  = isUp ? 'PREMIUM' : isDown ? 'DISCOUNT' : 'FLAT';
-  const pctEl = document.getElementById(metal+'-gauge-pct');
-  const lblEl = document.getElementById(metal+'-gauge-label');
-  if (pctEl) pctEl.textContent = pct != null ? sign+pct.toFixed(2)+'%' : '—';
-  if (lblEl) lblEl.textContent = 'TODAY %';
 
   // Big number and word
   const premEl = document.getElementById(metal+'-prem-usd');
@@ -918,41 +897,8 @@ function fillGauge(metal, d) {
   set(metal+'-bd-fwd-dod',  fmtS(fwdDodDisplay));
   set(metal+'-bd-fwd-wow',  fmtS(fwdWowDisplay));
 
-  // Store all values for toggle
-  const svg = document.getElementById(metal+'-gauge-svg');
-  if (svg) {
-    svg.dataset.pct    = pct    ?? '';
-    svg.dataset.pctDod = pctDod ?? '';
-    svg.dataset.pctWow = pctWow ?? '';
-    svg.dataset.usd    = usd    ?? '';
-    svg.dataset.usdDod = usdDod ?? '';
-    svg.dataset.usdWow = usdWow ?? '';
-  }
 }
 
-function toggleGaugeMode(metal) {
-  const modes = ['pct', 'usd-today', 'usd-dod', 'usd-wow'];
-  const cur   = gaugeMode[metal] || 'pct';
-  gaugeMode[metal] = modes[(modes.indexOf(cur) + 1) % modes.length];
-  const next  = gaugeMode[metal];
-
-  const svg   = document.getElementById(metal+'-gauge-svg');
-  const pctEl = document.getElementById(metal+'-gauge-pct');
-  const lblEl = document.getElementById(metal+'-gauge-label');
-
-  const pct    = parseFloat(svg.dataset.pct)    || null;
-  const usd    = parseFloat(svg.dataset.usd)    || null;
-  const usdDod = parseFloat(svg.dataset.usdDod) || null;
-  const usdWow = parseFloat(svg.dataset.usdWow) || null;
-
-  const fmtUsd = v => v != null ? (v>0?'+':'')+'$'+Math.abs(v).toFixed(0) : '—';
-  const fmtPct = v => v != null ? (v>0?'+':'')+v.toFixed(2)+'%' : '—';
-
-  if (next === 'pct')       { if (pctEl) pctEl.textContent = fmtPct(pct);    if (lblEl) lblEl.textContent = 'TODAY %';  }
-  else if (next === 'usd-today') { if (pctEl) pctEl.textContent = fmtUsd(usd);    if (lblEl) lblEl.textContent = 'TODAY $';  }
-  else if (next === 'usd-dod')   { if (pctEl) pctEl.textContent = fmtUsd(usdDod); if (lblEl) lblEl.textContent = 'T-2 $';   }
-  else                           { if (pctEl) pctEl.textContent = fmtUsd(usdWow); if (lblEl) lblEl.textContent = 'LST WK $'; }
-}
 
 // ── OI TABLE ─────────────────────────────────────────────────────────────────
 function populateOITable(commodity) {
