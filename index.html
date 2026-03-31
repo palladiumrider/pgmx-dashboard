@@ -386,7 +386,7 @@
         <!-- value labels -->
         <text id="pt-bar-wow-val" x="28" y="14" text-anchor="middle" style="font-family:'Bebas Neue',sans-serif;font-size:9px;fill:#4a5580">—</text>
         <text id="pt-bar-dod-val" x="65" y="14" text-anchor="middle" style="font-family:'Bebas Neue',sans-serif;font-size:9px;fill:#4a5580">—</text>
-        <text id="pt-bar-val"     x="102" y="14" text-anchor="middle" style="font-family:'Bebas Neue',sans-serif;font-size:9px;fill:#00c8ff">—</text>
+        <text id="pt-bar-val"     x="102" y="14" text-anchor="middle" style="font-family:'Bebas Neue',sans-serif;font-size:9px;fill:#ff8c00">—</text>
         <!-- period labels -->
         <text x="28"  y="100" text-anchor="middle" style="font-family:'DM Mono',monospace;font-size:6.5px;fill:#4a5580;letter-spacing:0.05em">LST WK</text>
         <text x="65"  y="100" text-anchor="middle" style="font-family:'DM Mono',monospace;font-size:6.5px;fill:#4a5580;letter-spacing:0.05em">T-2</text>
@@ -782,33 +782,78 @@ function fillGauge(metal, d) {
   const usdCny  = d.usd_cny_rate;
 
   // ── Mini bar chart ─────────────────────────────────────────────────────────
-  // Bars are drawn in an 70px tall track with the zero line at y=88.
-  // Positive values grow upward (y decreases), negative downward.
+  // Bars are drawn in a 70px tall track with zero line at y=88.
+  // Positive values grow upward, negative downward.
+  // Label is ALWAYS rendered above the bar top (never below).
+  // Clicking any bar toggles between % and $ display.
   const BAR_ZERO = 88, BAR_MAX_H = 70, MAX_PCT = 15;
-  const accentToday = metal === 'pt' ? '#00c8ff' : '#ff8c00';
+  const ORANGE = '#ff8c00';
 
-  function drawBar(barId, valId, val) {
-    const barEl = document.getElementById(metal+'-bar'+barId);
+  // store values for click toggle
+  const barData = {
+    '':    { pct, usd },
+    '-dod':{ pct: pctDod, usd: usdDod },
+    '-wow':{ pct: pctWow, usd: usdWow }
+  };
+
+  // initialise toggle state per metal if not set
+  if (!window._barMode) window._barMode = {};
+  if (!window._barMode[metal]) window._barMode[metal] = 'pct';
+
+  function renderBarLabel(barId) {
     const valEl = document.getElementById(metal+'-bar'+barId+'-val');
-    if (!barEl || !valEl) return;
+    const barEl = document.getElementById(metal+'-bar'+barId);
+    if (!valEl || !barEl) return;
+    const { pct: v, usd: u } = barData[barId];
+    const mode   = window._barMode[metal];
+    const isPos  = (v ?? 0) >= 0;
+    const col    = v == null ? '#4a5580' : isPos ? '#00ff88' : '#ff2d78';
+    const todayCol = ORANGE;
+    const labelCol = barId === '' ? todayCol : col;
+    let label;
+    if (mode === 'pct') {
+      const sign = v != null && v > 0 ? '+' : '';
+      label = v != null ? sign+v.toFixed(2)+'%' : '—';
+    } else {
+      const sign = u != null && u > 0 ? '+' : '';
+      label = u != null ? sign+'$'+Math.abs(u).toFixed(2) : '—';
+    }
+    valEl.textContent = label;
+    valEl.setAttribute('fill', labelCol);
+    // Always position label above the bar top
+    const h = parseFloat(barEl.getAttribute('height')) || 0;
+    const barY = parseFloat(barEl.getAttribute('y')) || BAR_ZERO;
+    valEl.setAttribute('y', Math.max(11, barY - 4).toFixed(1));
+  }
+
+  function drawBar(barId, val) {
+    const barEl = document.getElementById(metal+'-bar'+barId);
+    if (!barEl) return;
     const clipped = Math.max(-MAX_PCT, Math.min(MAX_PCT, val ?? 0));
     const h       = Math.abs(clipped) / MAX_PCT * BAR_MAX_H;
     const isPos   = clipped >= 0;
     const col     = val == null ? '#4a5580' : isPos ? '#00ff88' : '#ff2d78';
     barEl.setAttribute('height', h.toFixed(1));
     barEl.setAttribute('y', isPos ? (BAR_ZERO - h).toFixed(1) : BAR_ZERO.toString());
-    barEl.setAttribute('fill', barId === '' ? accentToday : col);
-    // for today bar keep accent colour but tint toward green/red
-    if (barId === '') barEl.setAttribute('fill', val == null ? '#4a5580' : isPos ? '#00ff88' : '#ff2d78');
-    const sign = val != null && val > 0 ? '+' : '';
-    valEl.textContent = val != null ? sign+val.toFixed(2)+'%' : '—';
-    valEl.setAttribute('fill', val == null ? '#4a5580' : isPos ? '#00ff88' : '#ff2d78');
-    valEl.setAttribute('y', isPos ? Math.max(11, BAR_ZERO - h - 3).toFixed(1) : (BAR_ZERO + h + 9).toFixed(1));
+    barEl.setAttribute('fill', col);
+    renderBarLabel(barId);
   }
 
-  drawBar('',     '',     pct);
-  drawBar('-dod', '-dod', pctDod);
-  drawBar('-wow', '-wow', pctWow);
+  // attach click listeners to toggle % / $ (once per metal per page load)
+  ['', '-dod', '-wow'].forEach(barId => {
+    const barEl = document.getElementById(metal+'-bar'+barId);
+    const valEl = document.getElementById(metal+'-bar'+barId+'-val');
+    const toggle = () => {
+      window._barMode[metal] = window._barMode[metal] === 'pct' ? 'usd' : 'pct';
+      ['', '-dod', '-wow'].forEach(id => renderBarLabel(id));
+    };
+    if (barEl && !barEl._clickBound) { barEl.addEventListener('click', toggle); barEl.style.cursor='pointer'; barEl._clickBound=true; }
+    if (valEl && !valEl._clickBound) { valEl.addEventListener('click', toggle); valEl.style.cursor='pointer'; valEl._clickBound=true; }
+  });
+
+  drawBar('',     pct);
+  drawBar('-dod', pctDod);
+  drawBar('-wow', pctWow);
 
   // Big number and word (driven by today's value)
   const isUp  = pct > 0, isDown = pct < 0;
