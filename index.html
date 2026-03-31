@@ -1021,7 +1021,7 @@ function buildCharts(commodity) {
     if (commodity === 'platinum') {
       disclaimerEl.style.display = 'block';
       const ptMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.';
-      const pdMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement. Note the unusually low palladium premiums in January despite the GFEX front contract rally — a visible dislocation of the market that was followed by a large drop.';
+      const pdMsg = 'The premium/discount overlay assumes a flat forward curve — no forward adjustment is applied to the historical series. Spot price used is the London close of each day, not the 7am London GMT, so this is not a like-for-like comparison. The chart is illustrative only, and will be followed by an enhancement.';
       const noDataMsg = 'Premium/discount overlay not available — run the workflow to generate historical spot data.';
       if (commodity === 'platinum') {
         disclaimerEl.innerHTML = hasPremium ? ptMsg : noDataMsg;
