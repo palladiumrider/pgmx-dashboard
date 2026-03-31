@@ -596,7 +596,7 @@
   <div class="section-title" id="oi-title">Platinum — Open Interest by Contract</div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Contract</th><th>Type</th><th>Open Interest (lots)</th><th>OI Chg DoD</th><th>OI Chg WoW</th></tr></thead>
+      <thead><tr><th>Contract</th><th>First Trade Date</th><th>Open Interest (lots)</th><th>OI Chg DoD</th><th>OI Chg WoW</th></tr></thead>
       <tbody id="oi-table"></tbody>
     </table>
   </div>
@@ -1122,12 +1122,14 @@ function populateOITable(commodity) {
   document.getElementById('oi-title').textContent=label+' — Open Interest by Contract';
   const tbody=document.getElementById('oi-table');
   tbody.innerHTML='';
+  const FIRST_TRADE_DATES = ['27-Nov-2025','27-Nov-2025','27-Nov-2025','12-Dec-2025','24-Feb-2026'];
   rows.forEach((r,i)=>{
-    const isFront=i===0, barW=r.dod_pct!=null?Math.min(Math.abs(r.dod_pct)*6,80):0;
+    const barW=r.dod_pct!=null?Math.min(Math.abs(r.dod_pct)*6,80):0;
     const barCol=(r.dod_pct??0)>=0?'var(--neon-green)':'var(--neon-pink)';
+    const firstTrade = FIRST_TRADE_DATES[i] || '—';
     tbody.innerHTML+=`<tr>
       <td><div class="contract-code">${r.contract.toUpperCase()}</div><div class="contract-name">GFEX ${label} Futures</div></td>
-      <td><span class="pill ${isFront?'front':'back'}">${isFront?'◆ FRONT':'DEFERRED'}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--muted)">${firstTrade}</td>
       <td style="color:var(--text);font-weight:600">${fmt(r.oi)}</td>
       <td><div class="bar-cell"><div class="mini-bar" style="width:${barW}px;background:${barCol}"></div><span class="${cls(r.dod_pct)}">${fmtP(r.dod_pct)}</span></div></td>
       <td class="${cls(r.wow_pct)}">${fmtP(r.wow_pct)}</td>
