@@ -484,6 +484,89 @@
     white-space:normal;
   }
   .kdcal-tooltip.visible { opacity:1; }
+
+  /* ── GFEX SESSION BAR ── */
+  .session-bar {
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:10px; margin-top:28px; margin-bottom:0;
+  }
+  .session-card {
+    border:1px solid var(--border); border-radius:2px;
+    padding:12px 16px; background:var(--surface);
+    position:relative; overflow:hidden;
+    transition:border-color 0.3s, background 0.3s;
+  }
+  .session-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:var(--border); transition:background 0.3s;
+  }
+  .session-card.live {
+    border-color:rgba(0,255,136,0.4);
+    background:rgba(0,255,136,0.04);
+  }
+  .session-card.live::before { background:var(--neon-green); }
+  .session-card.next {
+    border-color:rgba(0,200,255,0.25);
+  }
+  .session-card.next::before { background:var(--neon-blue); opacity:0.5; }
+  .session-top {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:4px;
+  }
+  .session-name {
+    font-family:'Bebas Neue',sans-serif; font-size:0.95rem;
+    letter-spacing:0.12em; color:var(--muted);
+    transition:color 0.3s;
+  }
+  .session-card.live .session-name { color:var(--neon-green); }
+  .session-card.next .session-name { color:var(--neon-blue); }
+  .session-badge {
+    font-family:'DM Mono',monospace; font-size:0.6rem;
+    letter-spacing:0.14em; padding:3px 8px; border-radius:2px;
+    display:flex; align-items:center; gap:5px;
+  }
+  .session-badge.live-badge-s {
+    background:rgba(0,255,136,0.12); color:var(--neon-green);
+    border:1px solid rgba(0,255,136,0.3);
+  }
+  .session-badge.next-badge-s {
+    background:rgba(0,200,255,0.08); color:var(--neon-blue);
+    border:1px solid rgba(0,200,255,0.2); font-size:0.58rem;
+  }
+  .session-badge.closed-badge {
+    background:transparent; color:var(--muted);
+    border:1px solid var(--border);
+  }
+  .live-pulse {
+    width:6px; height:6px; border-radius:50%;
+    background:var(--neon-green);
+    box-shadow:0 0 6px var(--neon-green);
+    animation:blink 1.1s ease-in-out infinite;
+    display:inline-block;
+  }
+  .session-time {
+    font-family:'DM Mono',monospace; font-size:0.68rem;
+    color:var(--muted); letter-spacing:0.06em;
+  }
+  .session-card.live .session-time { color:rgba(0,255,136,0.7); }
+
+  /* No-session countdown banner */
+  .no-session-banner {
+    display:none;
+    margin-top:10px; padding:12px 20px;
+    border:1px solid var(--border); border-radius:2px;
+    background:var(--surface);
+    font-family:'DM Mono',monospace; font-size:0.72rem;
+    color:var(--muted); letter-spacing:0.08em;
+    text-align:center; line-height:1.8;
+  }
+  .no-session-banner .countdown-val {
+    font-family:'Bebas Neue',sans-serif; font-size:1.1rem;
+    color:var(--neon-blue); letter-spacing:0.1em; margin:0 4px;
+  }
+  .no-session-banner .next-label {
+    color:var(--text); font-weight:600;
+  }
 </style>
 </head>
 <body>
@@ -503,6 +586,33 @@
     </div>
   </header>
 
+
+
+  <!-- ── GFEX TRADING SESSIONS ── -->
+  <div class="session-bar" id="sessionBar">
+    <div class="session-card" id="sess1">
+      <div class="session-top">
+        <div class="session-name">Session 1</div>
+        <div class="session-badge closed-badge" id="sess1-badge">CLOSED</div>
+      </div>
+      <div class="session-time">09:00 – 10:15 · Beijing Time</div>
+    </div>
+    <div class="session-card" id="sess2">
+      <div class="session-top">
+        <div class="session-name">Session 2</div>
+        <div class="session-badge closed-badge" id="sess2-badge">CLOSED</div>
+      </div>
+      <div class="session-time">10:30 – 11:30 · Beijing Time</div>
+    </div>
+    <div class="session-card" id="sess3">
+      <div class="session-top">
+        <div class="session-name">Session 3</div>
+        <div class="session-badge closed-badge" id="sess3-badge">CLOSED</div>
+      </div>
+      <div class="session-time">13:30 – 15:00 · Beijing Time</div>
+    </div>
+  </div>
+  <div class="no-session-banner" id="noSessionBanner"></div>
 
   <div style="font-family:'DM Mono',monospace;font-size:0.78rem;font-weight:700;color:var(--neon-orange);line-height:1.8;margin-top:28px;padding:20px 24px;border:1px solid var(--border);border-left:3px solid var(--neon-orange);background:rgba(255,140,0,0.04);border-radius:2px;">
     📌 <b>31 Mar, 11 am London:</b> PGM premiums in GFEX are rising since the drop on 23-Mar. However, we have yet to see a notable jump in activity on any contract. Note Palladium premium, trading back to 29-Jan levels.
@@ -1679,6 +1789,139 @@ function showKdTip(e, key) {
 function hideKdTip() { document.getElementById('kdTooltip').classList.remove('visible'); }
 
 document.addEventListener('keydown', e => { if(e.key==='Escape') { closeKdCal(); } });
+
+
+// ── GFEX SESSION TICKER ──────────────────────────────────────────────────────
+// All sessions are Mon–Fri Beijing Time (UTC+8), excluding Chinese public holidays.
+// We don't model holidays here — weekday check only.
+(function() {
+  // Sessions defined as [startH, startM, endH, endM]
+  const SESSIONS = [
+    { id: 'sess1', name: 'Session 1', start: [9,  0], end: [10, 15] },
+    { id: 'sess2', name: 'Session 2', start: [10, 30], end: [11, 30] },
+    { id: 'sess3', name: 'Session 3', start: [13, 30], end: [15,  0] },
+  ];
+
+  function toMinutes(h, m) { return h * 60 + m; }
+
+  function getBJT() {
+    // Beijing Time = UTC+8
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    return new Date(utc + 8 * 3600000);
+  }
+
+  function isWeekday(dt) { return dt.getDay() >= 1 && dt.getDay() <= 5; }
+
+  function updateSessions() {
+    const bjt   = getBJT();
+    const dow   = bjt.getDay(); // 0=Sun,6=Sat
+    const nowM  = toMinutes(bjt.getHours(), bjt.getMinutes());
+    const nowS  = bjt.getSeconds();
+    const banner = document.getElementById('noSessionBanner');
+
+    let liveIdx = -1, nextIdx = -1, minsToNext = Infinity;
+
+    // Find live session
+    SESSIONS.forEach((s, i) => {
+      const startM = toMinutes(...s.start);
+      const endM   = toMinutes(...s.end);
+      if (isWeekday(bjt) && nowM >= startM && nowM < endM) liveIdx = i;
+    });
+
+    // Find next session (today or next weekday)
+    if (liveIdx === -1) {
+      // Check remaining sessions today
+      if (isWeekday(bjt)) {
+        for (let i = 0; i < SESSIONS.length; i++) {
+          const startM = toMinutes(...SESSIONS[i].start);
+          if (nowM < startM) {
+            const diff = startM - nowM;
+            if (diff < minsToNext) { minsToNext = diff; nextIdx = i; }
+          }
+        }
+      }
+      // If no session today or it's a weekend, find next Monday (or next weekday) session 1
+      if (nextIdx === -1) {
+        // Days until next Monday if weekend, or next day if after all sessions on weekday
+        const daysUntilMon = dow === 0 ? 1 : dow === 6 ? 2 : 1;
+        // If Friday after close or weekend, count to Monday 9am
+        const nextBJT = new Date(bjt);
+        if (dow === 5 && nowM >= toMinutes(...SESSIONS[2].end)) {
+          // Friday after close → Monday
+          nextBJT.setDate(bjt.getDate() + 3);
+        } else if (dow === 6) {
+          nextBJT.setDate(bjt.getDate() + 2);
+        } else if (dow === 0) {
+          nextBJT.setDate(bjt.getDate() + 1);
+        } else {
+          // Weekday but all sessions done
+          nextBJT.setDate(bjt.getDate() + 1);
+          // Skip to Monday if tomorrow is weekend
+          if (nextBJT.getDay() === 6) nextBJT.setDate(nextBJT.getDate() + 2);
+          if (nextBJT.getDay() === 0) nextBJT.setDate(nextBJT.getDate() + 1);
+        }
+        nextBJT.setHours(9, 0, 0, 0);
+        const diffMs = nextBJT - bjt;
+        minsToNext = diffMs / 60000;
+        nextIdx = 0; // Session 1
+      }
+    }
+
+    // Update card states
+    SESSIONS.forEach((s, i) => {
+      const card  = document.getElementById(s.id);
+      const badge = document.getElementById(s.id + '-badge');
+      card.classList.remove('live', 'next');
+      if (i === liveIdx) {
+        card.classList.add('live');
+        badge.className = 'session-badge live-badge-s';
+        badge.innerHTML = '<span class="live-pulse"></span>LIVE';
+      } else if (liveIdx === -1 && i === nextIdx) {
+        card.classList.add('next');
+        const totalSecs = Math.max(0, Math.round(minsToNext * 60 - nowS));
+        const hh = Math.floor(totalSecs / 3600);
+        const mm = Math.floor((totalSecs % 3600) / 60);
+        const ss = totalSecs % 60;
+        let countdown = '';
+        if (hh > 0) {
+          const days = Math.floor(hh / 24), hrs = hh % 24;
+          if (days > 0) countdown = `${days}d ${hrs}h ${mm}m`;
+          else countdown = `${hh}h ${String(mm).padStart(2,'0')}m ${String(ss).padStart(2,'0')}s`;
+        } else {
+          countdown = `${String(mm).padStart(2,'0')}m ${String(ss).padStart(2,'0')}s`;
+        }
+        badge.className = 'session-badge next-badge-s';
+        badge.textContent = 'NEXT · ' + countdown;
+      } else {
+        badge.className = 'session-badge closed-badge';
+        badge.textContent = 'CLOSED';
+      }
+    });
+
+    // No-session banner
+    if (liveIdx === -1) {
+      banner.style.display = 'block';
+      const s = SESSIONS[nextIdx];
+      const totalSecs = Math.max(0, Math.round(minsToNext * 60 - nowS));
+      const days = Math.floor(totalSecs / 86400);
+      const hrs  = Math.floor((totalSecs % 86400) / 3600);
+      const mm   = Math.floor((totalSecs % 3600) / 60);
+      const ss   = totalSecs % 60;
+      let parts = [];
+      if (days > 0) parts.push(`<span class="countdown-val">${days}</span>d`);
+      if (hrs  > 0 || days > 0) parts.push(`<span class="countdown-val">${hrs}</span>h`);
+      parts.push(`<span class="countdown-val">${String(mm).padStart(2,'0')}</span>m`);
+      if (days === 0) parts.push(`<span class="countdown-val">${String(ss).padStart(2,'0')}</span>s`);
+      banner.innerHTML = `No session in progress &nbsp;·&nbsp; Next: <span class="next-label">${s.name} (${s.start[0]}:${String(s.start[1]).padStart(2,'0')} Beijing)</span> starts in ${parts.join(' ')}`;
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  updateSessions();
+  setInterval(updateSessions, 1000);
+})();
 
 </script>
 </body>
