@@ -2068,12 +2068,10 @@ Today's session (${last.date}):
 Write 2-3 sentences of actionable insight. Lead with the most notable signal. Mention specific numbers. End with what to watch.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/.netlify/functions/analyse', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -2095,4 +2093,3 @@ Write 2-3 sentences of actionable insight. Lead with the most notable signal. Me
 </script>
 </body>
 </html>
-
