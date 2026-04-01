@@ -2076,13 +2076,17 @@ Write 2-3 sentences of actionable insight. Lead with the most notable signal. Me
       })
     });
     const data = await res.json();
+    console.log('Anthropic response:', JSON.stringify(data));
     const text = data.content?.map(b => b.text||'').join('').trim();
     if (text) {
       analysisCache[metal] = text;
       renderAnalysis(text, metal);
+    } else if (data.error) {
+      body.className = 'analysis-body';
+      body.textContent = 'API error: ' + data.error.type + ' — ' + data.error.message;
     } else {
       body.className = 'analysis-body';
-      body.textContent = 'Analysis unavailable — check API response.';
+      body.textContent = 'Unexpected response — see browser console for details.';
     }
   } catch(e) {
     body.className = 'analysis-body';
