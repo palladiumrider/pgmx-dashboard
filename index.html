@@ -567,6 +567,62 @@
   .no-session-banner .next-label {
     color:var(--text); font-weight:600;
   }
+
+  /* ── PRICE ACTION ANALYSIS PANEL ── */
+  .analysis-panel {
+    background:var(--surface); border:1px solid var(--border);
+    border-left:3px solid var(--neon-purple);
+    border-radius:2px; padding:18px 24px;
+    margin-bottom:28px;
+    opacity:0; transform:translateY(18px);
+    animation:fadeUp 0.55s ease forwards 0.35s;
+  }
+  .analysis-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .analysis-title {
+    font-family:'Bebas Neue',sans-serif; font-size:0.95rem;
+    letter-spacing:0.14em; color:var(--neon-purple);
+    display:flex; align-items:center; gap:8px;
+  }
+  .analysis-tag {
+    font-family:'DM Mono',monospace; font-size:0.55rem;
+    letter-spacing:0.16em; padding:2px 7px; border-radius:2px;
+    background:rgba(179,71,255,0.1); border:1px solid rgba(179,71,255,0.25);
+    color:var(--neon-purple); text-transform:uppercase;
+  }
+  .analysis-meta {
+    font-family:'DM Mono',monospace; font-size:0.58rem;
+    color:var(--muted); letter-spacing:0.1em;
+  }
+  .analysis-body {
+    font-family:'DM Mono',monospace; font-size:0.78rem;
+    color:var(--text); line-height:1.85; letter-spacing:0.03em;
+  }
+  .analysis-body.loading {
+    color:var(--muted); font-style:italic;
+    display:flex; align-items:center; gap:8px;
+  }
+  .analysis-body.loading::before {
+    content:''; width:8px; height:8px; border-radius:50%;
+    border:2px solid var(--neon-purple);
+    border-top-color:transparent;
+    animation:spin 0.8s linear infinite; flex-shrink:0;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .analysis-commodity-toggle {
+    display:flex; gap:6px;
+  }
+  .analysis-tab {
+    font-family:'DM Mono',monospace; font-size:0.62rem;
+    letter-spacing:0.12em; text-transform:uppercase;
+    padding:4px 12px; border-radius:2px; cursor:pointer;
+    border:1px solid var(--border); background:transparent;
+    color:var(--muted); transition:all 0.15s;
+  }
+  .analysis-tab.active-pt { border-color:var(--neon-blue); color:var(--neon-blue); background:rgba(0,200,255,0.08); }
+  .analysis-tab.active-pd { border-color:var(--neon-orange); color:var(--neon-orange); background:rgba(255,140,0,0.08); }
 </style>
 </head>
 <body>
@@ -710,6 +766,25 @@
       <tbody id="oi-table"></tbody>
     </table>
   </div>
+
+  <!-- ── PRICE ACTION ANALYSIS ── -->
+  <div class="analysis-panel" id="analysisPanel">
+    <div class="analysis-header">
+      <div class="analysis-title">
+        ✦ Price Action Analysis
+        <span class="analysis-tag">AI · Live</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="analysis-commodity-toggle">
+          <button class="analysis-tab active-pt" id="atab-pt" onclick="switchAnalysisTab('pt')">Platinum</button>
+          <button class="analysis-tab" id="atab-pd" onclick="switchAnalysisTab('pd')">Palladium</button>
+        </div>
+        <div class="analysis-meta" id="analysis-meta">—</div>
+      </div>
+    </div>
+    <div class="analysis-body loading" id="analysis-body">Generating analysis…</div>
+  </div>
+
 
   <div class="stats-grid">
     <div class="stat-card">
@@ -1533,6 +1608,7 @@ async function init() {
 
     populateOITable('platinum');
     buildCharts('platinum');
+    runAnalysis('pt');
   } catch(err) {
     console.error('Failed to load pgmx-data.json:',err);
     document.getElementById('oi-table').innerHTML=`<tr><td colspan="5" style="color:var(--loss);text-align:center;padding:30px;">Failed to load data — ${err.message}</td></tr>`;
@@ -1905,6 +1981,116 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') { closeKdCal();
   updateSessions();
   setInterval(updateSessions, 1000);
 })();
+
+
+// ── PRICE ACTION ANALYSIS ─────────────────────────────────────────────────────
+const analysisCache = { pt: null, pd: null };
+let analysisTab = 'pt';
+
+function switchAnalysisTab(metal) {
+  analysisTab = metal;
+  document.getElementById('atab-pt').className = 'analysis-tab' + (metal==='pt' ? ' active-pt' : '');
+  document.getElementById('atab-pd').className = 'analysis-tab' + (metal==='pd' ? ' active-pd' : '');
+  if (analysisCache[metal]) {
+    renderAnalysis(analysisCache[metal], metal);
+  } else {
+    runAnalysis(metal);
+  }
+}
+
+function renderAnalysis(text, metal) {
+  const body = document.getElementById('analysis-body');
+  body.className = 'analysis-body';
+  body.textContent = text;
+  const meta = document.getElementById('analysis-meta');
+  const now = new Date();
+  meta.textContent = `${metal.toUpperCase()} · ${now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} London`;
+}
+
+async function runAnalysis(metal) {
+  if (!pgmxData) return;
+  const body = document.getElementById('analysis-body');
+  body.className = 'analysis-body loading';
+  body.textContent = 'Generating analysis…';
+
+  const commodity = metal === 'pt' ? 'platinum' : 'palladium';
+  const cs = pgmxData[commodity]?.candlestick?.data || [];
+  if (cs.length < 22) { body.className='analysis-body'; body.textContent='Insufficient data for analysis.'; return; }
+
+  // Build last 22 sessions of data for the prompt
+  const recent = cs.slice(-22);
+  const last    = recent[recent.length - 1];
+  const prev    = recent[recent.length - 2];
+
+  // Pre-compute signals so the model gets structured facts, not raw arrays
+  const avg20vol = recent.slice(0,20).reduce((s,d)=>s+(d.volume||0),0)/20;
+  const avg20oi  = recent.slice(0,20).reduce((s,d)=>s+(d.oi||0),0)/20;
+  const settle   = last.settle ?? last.close;
+  const prevSettle = prev.settle ?? prev.close;
+  const hi20     = Math.max(...recent.slice(-20).map(d=>d.high));
+  const lo20     = Math.min(...recent.slice(-20).map(d=>d.low));
+  const hi10     = Math.max(...recent.slice(-10).map(d=>d.high));
+  const lo10     = Math.min(...recent.slice(-10).map(d=>d.low));
+
+  // OI + price + volume signal
+  const oiUp    = (last.oi||0) > (prev.oi||0);
+  const priceUp = settle > prevSettle;
+  const volUp   = (last.volume||0) > avg20vol;
+  let oiSignal;
+  if (priceUp && oiUp)   oiSignal = 'Price up + OI up: new longs being added, trend conviction';
+  else if (priceUp && !oiUp)  oiSignal = 'Price up + OI down: short covering rally, less conviction';
+  else if (!priceUp && oiUp)  oiSignal = 'Price down + OI up: new shorts being added, bearish pressure';
+  else                         oiSignal = 'Price down + OI down: long liquidation, trend may be exhausting';
+
+  // Gap open
+  const gapPct = prev ? +((last.open - prevSettle)/prevSettle*100).toFixed(2) : 0;
+
+  // Inside/outside day
+  const isInside  = last.high < prev.high && last.low > prev.low;
+  const isOutside = last.high > prev.high && last.low < prev.low;
+  const dayType = isInside ? 'Inside day (range compression)' : isOutside ? 'Outside day (range expansion)' : 'Normal day';
+
+  const metalName = metal === 'pt' ? 'Platinum (PT2606)' : 'Palladium (PD2606)';
+  const prompt = `You are a futures market analyst writing a 2-3 sentence desk note for traders watching GFEX ${metalName} futures. Be direct, specific and use numbers. No fluff. No disclaimers.
+
+Today's session (${last.date}):
+- Settle: ${settle} CNY/g (prev: ${prevSettle}, chg: ${((settle-prevSettle)/prevSettle*100).toFixed(2)}%)
+- Open: ${last.open}, High: ${last.high}, Low: ${last.low}
+- Gap open vs prev settle: ${gapPct > 0 ? '+' : ''}${gapPct}%
+- Day type: ${dayType}
+- Volume: ${last.volume?.toLocaleString()} lots (20D avg: ${Math.round(avg20vol).toLocaleString()}, ${last.volume > avg20vol ? '+' : ''}${(((last.volume||0)-avg20vol)/avg20vol*100).toFixed(0)}% vs avg)
+- Open Interest: ${last.oi?.toLocaleString()} lots (20D avg: ${Math.round(avg20oi).toLocaleString()})
+- OI/Price/Volume signal: ${oiSignal}
+- 10-session range: ${lo10.toFixed(2)} – ${hi10.toFixed(2)}
+- 20-session range: ${lo20.toFixed(2)} – ${hi20.toFixed(2)}
+- Settle vs 20-session range: ${settle >= hi20 ? 'AT/NEAR 20-SESSION HIGH' : settle <= lo20 ? 'AT/NEAR 20-SESSION LOW' : `mid-range (${(((settle-lo20)/(hi20-lo20))*100).toFixed(0)}% from low)`}
+
+Write 2-3 sentences of actionable insight. Lead with the most notable signal. Mention specific numbers. End with what to watch.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.map(b => b.text||'').join('').trim();
+    if (text) {
+      analysisCache[metal] = text;
+      renderAnalysis(text, metal);
+    } else {
+      body.className = 'analysis-body';
+      body.textContent = 'Analysis unavailable — check API response.';
+    }
+  } catch(e) {
+    body.className = 'analysis-body';
+    body.textContent = 'Analysis unavailable — ' + e.message;
+  }
+}
 
 </script>
 </body>
