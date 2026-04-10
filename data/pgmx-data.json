@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-10T08:44:36",
+  "generated": "2026-04-10T11:20:58",
   "date_today": "2026-04-10",
   "date_dod": "2026-04-09",
   "date_dod_spot": "2026-04-08",
@@ -11,32 +11,32 @@
   "fwd_days": 73,
   "pt_fwd_days_dod": 74,
   "pt_fwd_days_wow": 81,
-  "pt_spot_usd_oz": 2057.45,
+  "pt_spot_usd_oz": 2054.12,
   "pt_spot_dod": 2034.64,
   "pt_spot_wow": 1969.11,
-  "pt_fwd_usd_oz": 2034.5,
+  "pt_fwd_usd_oz": 2031.21,
   "pt_fwd_dod": 2010.7,
   "pt_fwd_wow": 1944.74,
   "pt_gfex_settle_cny_g": 524.45,
   "pt_gfex_settle_dod": 518.45,
   "pt_gfex_settle_wow": 493.45,
-  "pt_premium_usd_oz": 77.57,
-  "pt_premium_pct": 3.81,
+  "pt_premium_usd_oz": 80.86,
+  "pt_premium_pct": 3.98,
   "pt_premium_usd_oz_dod": 78.78,
   "pt_premium_pct_dod": 3.92,
   "pt_premium_usd_oz_wow": 24.42,
   "pt_premium_pct_wow": 1.26,
-  "pd_spot_usd_oz": 1549.29,
+  "pd_spot_usd_oz": 1521.86,
   "pd_spot_dod": 1519.65,
   "pd_spot_wow": 1472.46,
-  "pd_fwd_usd_oz": 1547.72,
+  "pd_fwd_usd_oz": 1520.32,
   "pd_fwd_dod": 1518.02,
   "pd_fwd_wow": 1470.8,
   "pd_gfex_settle_cny_g": 388.25,
   "pd_gfex_settle_dod": 383.15,
   "pd_gfex_settle_wow": 363.75,
-  "pd_premium_usd_oz": 15.85,
-  "pd_premium_pct": 1.02,
+  "pd_premium_usd_oz": 43.25,
+  "pd_premium_pct": 2.84,
   "pd_premium_usd_oz_dod": 26.17,
   "pd_premium_pct_dod": 1.72,
   "pd_premium_usd_oz_wow": -19.22,
@@ -202,6 +202,13 @@
       "spot": 2429.34,
       "prem_usd": 234.11,
       "prem_pct": 9.64
+    },
+    {
+      "date": "2025-12-30",
+      "gfex_usd": 2359.5,
+      "spot": 2084.54,
+      "prem_usd": 274.96,
+      "prem_pct": 13.19
     },
     {
       "date": "2025-12-31",
@@ -806,6 +813,13 @@
       "spot": 1929.53,
       "prem_usd": 90.99,
       "prem_pct": 4.72
+    },
+    {
+      "date": "2025-12-30",
+      "gfex_usd": 1766.52,
+      "spot": 1646.11,
+      "prem_usd": 120.41,
+      "prem_pct": 7.31
     },
     {
       "date": "2025-12-31",
@@ -1482,6 +1496,16 @@
           "settle": 677.95,
           "volume": 126019,
           "oi": 41795
+        },
+        {
+          "date": "2025-12-30",
+          "open": 589.85,
+          "high": 616.0,
+          "low": 589.85,
+          "close": 589.85,
+          "settle": 599.45,
+          "volume": 65864,
+          "oi": 39384
         },
         {
           "date": "2025-12-31",
@@ -2391,6 +2415,16 @@
           "settle": 514.3,
           "volume": 67638,
           "oi": 25772
+        },
+        {
+          "date": "2025-12-30",
+          "open": 450.0,
+          "high": 457.1,
+          "low": 447.45,
+          "close": 447.45,
+          "settle": 448.8,
+          "volume": 40695,
+          "oi": 20169
         },
         {
           "date": "2025-12-31",
