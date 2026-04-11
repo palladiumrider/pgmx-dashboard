@@ -78,18 +78,20 @@
     100% { opacity:0; transform:translateY(-60vh) scale(0.4); }
   }
 
-  /* Hero logo — lowercase x sits at cap-mid height */
+  /* Hero logo — lowercase x: baseline-aligned, top reaches ~half cap height */
   .hero-logo-x {
-    font-size:0.52em;
-    vertical-align:0.18em;   /* lifts baseline so top reaches ~50% of cap height */
+    font-size:0.48em;
+    vertical-align:0;
     letter-spacing:0;
+    display:inline-block;
   }
 
   /* Dashboard header logo lowercase x */
   .logo-x {
-    font-size:0.52em;
-    vertical-align:0.18em;
+    font-size:0.48em;
+    vertical-align:0;
     letter-spacing:0;
+    display:inline-block;
   }
 
   /* Hero text content */
@@ -1542,14 +1544,46 @@ async function init() {
       if (badge) badge.style.display = 'flex';
     }
     try {
-      const csr = await fetch('data/custom-spot.json?v='+Date.now());
-      if (csr.ok) {
-        const cs = await csr.json();
-        if (cs.gfex_date === pgmxData.date_today) {
-          const custom = buildCustomData(cs.pt_today, cs.pt_dod, cs.pt_wow, cs.pd_today, cs.pd_dod, cs.pd_wow);
-          fillGauge('pt', custom); fillGauge('pd', custom); usingCustomSpot = true;
+      // ── Restore saved spot + forward values ──────────────────────────────
+      // Priority: localStorage (survives refresh, this device) → custom-spot.json (shared)
+      // Both are keyed by gfex_date so stale data from a previous trading day is ignored.
+      let restored = false;
+
+      // 1. Try localStorage first
+      try {
+        const lsRaw = localStorage.getItem('pgmx_custom');
+        if (lsRaw) {
+          const ls = JSON.parse(lsRaw);
+          if (ls.gfex_date === pgmxData.date_today) {
+            // Restore forward overrides
+            if (ls.fwd) customFwd = ls.fwd;
+            // Restore spot + recalculate
+            if (ls.pt_today || ls.pt_dod || ls.pt_wow || ls.pd_today || ls.pd_dod || ls.pd_wow) {
+              const custom = buildCustomData(ls.pt_today, ls.pt_dod, ls.pt_wow, ls.pd_today, ls.pd_dod, ls.pd_wow);
+              fillGauge('pt', custom); fillGauge('pd', custom);
+              usingCustomSpot = true;
+            } else {
+              // Forwards only — no custom spot
+              fillGauge('pt', pgmxData); fillGauge('pd', pgmxData);
+            }
+            restored = true;
+          }
+        }
+      } catch(_) {}
+
+      // 2. Fall back to shared custom-spot.json (spot only, no forward — older saves)
+      if (!restored) {
+        const csr = await fetch('data/custom-spot.json?v='+Date.now());
+        if (csr.ok) {
+          const cs = await csr.json();
+          if (cs.gfex_date === pgmxData.date_today) {
+            if (cs.fwd) customFwd = cs.fwd;
+            const custom = buildCustomData(cs.pt_today, cs.pt_dod, cs.pt_wow, cs.pd_today, cs.pd_dod, cs.pd_wow);
+            fillGauge('pt', custom); fillGauge('pd', custom);
+            usingCustomSpot = true;
+          } else { fillGauge('pt', pgmxData); fillGauge('pd', pgmxData); }
         } else { fillGauge('pt', pgmxData); fillGauge('pd', pgmxData); }
-      } else { fillGauge('pt', pgmxData); fillGauge('pd', pgmxData); }
+      }
     } catch(_) { fillGauge('pt', pgmxData); fillGauge('pd', pgmxData); }
     populateOITable('platinum');
     buildCharts('platinum');
@@ -1669,7 +1703,17 @@ async function applyCustomSpot() {
 
   if (!ptToday && !ptDod && !ptWow && !pdToday && !pdDod && !pdWow) {
     fillGauge('pt', pgmxData); fillGauge('pd', pgmxData);
-    document.getElementById('spot-status').textContent = '✦ Forward rates applied';
+    // Persist forward-only overrides to localStorage
+    try {
+      const existing = JSON.parse(localStorage.getItem('pgmx_custom') || '{}');
+      localStorage.setItem('pgmx_custom', JSON.stringify({
+        ...existing,
+        gfex_date: pgmxData.date_today,
+        fwd: customFwd,
+        submitted: new Date().toISOString()
+      }));
+    } catch(_) {}
+    document.getElementById('spot-status').textContent = '✦ Forward rates applied & saved';
     document.getElementById('spot-status').className = 'spot-status active';
     setTimeout(closeSpotModal, 1200); return;
   }
@@ -1680,12 +1724,31 @@ async function applyCustomSpot() {
   document.getElementById('spot-status').textContent = '✦ Saving for all users…';
   document.getElementById('spot-status').className = 'spot-status active';
 
+  // Save to localStorage immediately (persists on this device across refreshes)
   try {
-    const payload = { gfex_date:pgmxData.date_today, pt_today:ptToday, pt_dod:ptDod, pt_wow:ptWow, pd_today:pdToday, pd_dod:pdDod, pd_wow:pdWow, submitted:new Date().toISOString() };
+    const lsPayload = {
+      gfex_date: pgmxData.date_today,
+      pt_today: ptToday, pt_dod: ptDod, pt_wow: ptWow,
+      pd_today: pdToday, pd_dod: pdDod, pd_wow: pdWow,
+      fwd: customFwd,
+      submitted: new Date().toISOString()
+    };
+    localStorage.setItem('pgmx_custom', JSON.stringify(lsPayload));
+  } catch(_) {}
+
+  // Also push to shared custom-spot.json via Netlify so other users see it
+  try {
+    const payload = {
+      gfex_date: pgmxData.date_today,
+      pt_today: ptToday, pt_dod: ptDod, pt_wow: ptWow,
+      pd_today: pdToday, pd_dod: pdDod, pd_wow: pdWow,
+      fwd: customFwd,
+      submitted: new Date().toISOString()
+    };
     const resp = await fetch('/.netlify/functions/save-custom-spot', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-    document.getElementById('spot-status').textContent = resp.ok ? '✦ Saved — all users will see these prices on refresh' : '✦ Updated locally (save failed — check function)';
+    document.getElementById('spot-status').textContent = resp.ok ? '✦ Saved — values will persist on refresh' : '✦ Saved locally — shared save failed';
   } catch(e) {
-    document.getElementById('spot-status').textContent = '✦ Updated locally (offline save)';
+    document.getElementById('spot-status').textContent = '✦ Saved locally (offline)';
   }
   setTimeout(closeSpotModal, 2000);
 }
@@ -1696,6 +1759,8 @@ function resetToApiSpot() {
   fillGauge('pt', pgmxData); fillGauge('pd', pgmxData);
   usingCustomSpot = false;
   ['fi-pt-today','fi-pt-dod','fi-pt-wow','fi-pd-today','fi-pd-dod','fi-pd-wow'].forEach(id => { document.getElementById(id).value = ''; });
+  // Clear persisted values — revert to defaults on next refresh
+  try { localStorage.removeItem('pgmx_custom'); } catch(_) {}
   document.getElementById('spot-status').textContent = 'Reset to API prices & default forwards';
   document.getElementById('spot-status').className = 'spot-status';
   setTimeout(closeSpotModal, 800);
