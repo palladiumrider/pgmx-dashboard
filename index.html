@@ -47,13 +47,7 @@
     position:absolute; inset:0; z-index:1; pointer-events:none;
     background:repeating-linear-gradient(to bottom,transparent 0,transparent 3px,rgba(0,200,255,0.018) 3px,rgba(0,200,255,0.018) 4px);
   }
-  .hero-sweep {
-    position:absolute; left:0; right:0; height:2px; z-index:2; pointer-events:none;
-    background:linear-gradient(90deg,transparent,rgba(0,200,255,0.5),rgba(179,71,255,0.5),transparent);
-    box-shadow:0 0 24px 6px rgba(0,200,255,0.18), 0 0 60px 12px rgba(179,71,255,0.1);
-    animation:sweepDown 4.5s ease-in-out infinite;
-  }
-  @keyframes sweepDown { 0%{top:-2px;opacity:0;} 5%{opacity:1;} 95%{opacity:1;} 100%{top:100%;opacity:0;} }
+  /* sweep handled by JS canvas */
 
   /* Corner brackets */
   .corner { position:absolute; width:26px; height:26px; z-index:5; pointer-events:none; }
@@ -82,6 +76,20 @@
     10%  { opacity:0.55; }
     90%  { opacity:0.25; }
     100% { opacity:0; transform:translateY(-60vh) scale(0.4); }
+  }
+
+  /* Hero logo — lowercase x sits at cap-mid height */
+  .hero-logo-x {
+    font-size:0.52em;
+    vertical-align:0.18em;   /* lifts baseline so top reaches ~50% of cap height */
+    letter-spacing:0;
+  }
+
+  /* Dashboard header logo lowercase x */
+  .logo-x {
+    font-size:0.52em;
+    vertical-align:0.18em;
+    letter-spacing:0;
   }
 
   /* Hero text content */
@@ -155,33 +163,32 @@
   .hero-update-label { color:var(--muted); }
   .hero-update-ts { color:var(--neon-blue); letter-spacing:0.1em; }
 
-  /* Enter button */
-  .hero-enter {
-    display:inline-block;
-    font-family:'DM Mono',monospace; font-size:0.62rem;
-    letter-spacing:0.2em; text-transform:uppercase; color:var(--neon-blue);
-    background:rgba(0,200,255,0.07); border:1px solid rgba(0,200,255,0.28);
-    padding:11px 26px; border-radius:2px; cursor:pointer;
-    opacity:0; animation:heroFade 0.6s ease forwards 1.6s;
-    transition:background 0.18s, box-shadow 0.18s;
-    white-space:nowrap; text-decoration:none;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .hero-enter:hover,.hero-enter:active {
-    background:rgba(0,200,255,0.15); box-shadow:0 0 22px rgba(0,200,255,0.25);
-  }
+  /* Enter button — removed, CSS kept inert */
+  .hero-enter { display:none; }
+
   /* Scroll pip */
-  <button class="hero-scroll" onclick="document.getElementById('dashboard').scrollIntoView({behavior:'smooth'})">
-    <span>Scroll</span>
-    <div class="hero-scroll-arrow">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M6 2V10" stroke="#00c8ff" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M3 7L6 10L9 7" stroke="#00c8ff" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-    </div>
-  </button>
-</section>
+  .hero-scroll {
+    position:absolute; bottom:max(26px,calc(20px + env(safe-area-inset-bottom)));
+    left:50%; transform:translateX(-50%);
+    z-index:10; display:flex; flex-direction:column; align-items:center; gap:6px;
+    opacity:0; animation:heroFade 0.6s ease forwards 1.8s;
+    background:none; border:none; cursor:pointer; -webkit-tap-highlight-color:transparent;
+    padding:0;
+  }
+  .hero-scroll span { font-family:'DM Mono',monospace; font-size:0.55rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); }
+  .hero-scroll-arrow {
+    width:26px; height:26px; border:1px solid rgba(0,200,255,0.28); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:transparent;
+    animation:bounceDown 2s ease-in-out infinite;
+  }
   @keyframes bounceDown { 0%,100%{transform:translateY(0);} 50%{transform:translateY(5px);} }
+
+  /* Electro sweep canvas */
+  #hero-sweep-canvas {
+    position:absolute; inset:0; width:100%; height:100%;
+    z-index:4; pointer-events:none;
+  }
 
   @media (max-width:480px) {
     .corner { width:16px; height:16px; }
@@ -445,7 +452,7 @@
 <section class="hero" id="hero">
   <div class="hero-orb"></div>
   <div class="hero-scanline"></div>
-  <div class="hero-sweep"></div>
+  <canvas id="hero-sweep-canvas"></canvas>
 
   <div class="corner tl"></div>
   <div class="corner tr"></div>
@@ -456,7 +463,7 @@
   <div id="hero-canvas-wrap"></div>
 
   <div class="hero-content">
-    <div class="hero-logo">PGM<span style="-webkit-text-fill-color:inherit;font-size:0.72em;vertical-align:baseline;">x</span></div>
+    <div class="hero-logo" id="hero-logo-text">PGM<span class="hero-logo-x">x</span></div>
     <div class="hero-tagline">A first take on GFEX PGM data</div>
     <div class="hero-sub">Platinum · Palladium · Guangzhou Futures Exchange</div>
     <div class="hero-divider"></div>
@@ -465,7 +472,6 @@
       <span class="hero-update-label">Last update</span>
       <span class="hero-update-ts" id="hero-update-ts">—</span>
     </div>
-    <a class="hero-enter" href="#dashboard" style="pointer-events:auto;margin-top:10px;">Enter Dashboard ↓</a>
   </div>
 
   <button class="hero-scroll" onclick="document.getElementById('dashboard').scrollIntoView({behavior:'smooth'})">
@@ -487,7 +493,7 @@
 <div class="container">
   <header>
     <div>
-      <div class="logo">PGMx</div>
+      <div class="logo">PGM<span class="logo-x">x</span></div>
       <div class="logo-sub">Activity Dashboard</div>
       <div class="logo-tagline">A first take on GFEX PGM data</div>
     </div>
@@ -879,6 +885,122 @@ There have been no notable changes in open interest nor volumes. Meanwhile, loco
     p.style.cssText = `left:${Math.random()*100}%;bottom:${Math.random()*15}%;background:${colors[Math.floor(Math.random()*3)]};--dur:${6+Math.random()*10}s;--delay:${Math.random()*8}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;`;
     c.appendChild(p);
   }
+})();
+
+// ── ELECTRO SWEEP CANVAS ──────────────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('hero-sweep-canvas');
+  const ctx    = canvas.getContext('2d');
+  const hero   = document.getElementById('hero');
+  const logoEl = document.getElementById('hero-logo-text');
+
+  let W, H, logoTop, logoBot;
+
+  function resize() {
+    W = canvas.width  = hero.offsetWidth;
+    H = canvas.height = hero.offsetHeight;
+    const r = logoEl.getBoundingClientRect();
+    const hr = hero.getBoundingClientRect();
+    logoTop = r.top  - hr.top;
+    logoBot = r.bottom - hr.top;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // sweep state
+  let sweepY    = -4;
+  const SPEED   = H / 220;   // full height in ~3.7 s at 60fps
+  const PAUSE   = 90;        // frames to pause at bottom before reset
+  let   pauseCt = 0;
+  let   paused  = false;
+
+  // electro zig-zag parameters
+  const ZAG_SEGS   = 18;    // number of zig-zag segments across width
+  const ZAG_AMP    = 14;    // max vertical amplitude of zags in px
+  const ZAG_SPEED  = 0.38;  // how fast zag points jitter per frame
+
+  let zagOffsets = Array.from({length: ZAG_SEGS + 1}, () => (Math.random()-0.5)*2);
+
+  function drawSweep(y) {
+    ctx.clearRect(0, 0, W, H);
+
+    const inLogo = y > logoTop - 4 && y < logoBot + 4;
+
+    // Glow underneath
+    const grd = ctx.createLinearGradient(0, y - 28, 0, y + 6);
+    grd.addColorStop(0, 'rgba(0,200,255,0)');
+    grd.addColorStop(1, inLogo ? 'rgba(0,200,255,0.12)' : 'rgba(0,200,255,0.06)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, y - 28, W, 34);
+
+    ctx.save();
+    ctx.shadowBlur  = inLogo ? 22 : 10;
+    ctx.shadowColor = inLogo ? '#b347ff' : '#00c8ff';
+
+    ctx.beginPath();
+
+    if (inLogo) {
+      // Electro zig-zag across the logo
+      // Jitter the zag offsets
+      zagOffsets = zagOffsets.map(v => {
+        v += (Math.random() - 0.5) * ZAG_SPEED * 2;
+        return Math.max(-1, Math.min(1, v));
+      });
+
+      const segW = W / ZAG_SEGS;
+      ctx.moveTo(0, y + zagOffsets[0] * ZAG_AMP);
+      for (let i = 1; i <= ZAG_SEGS; i++) {
+        const x = i * segW;
+        // Mid-point sharp spike for extra zag
+        const midX = (i - 0.5) * segW;
+        const midY = y + zagOffsets[i - 1] * ZAG_AMP * 1.8;
+        ctx.lineTo(midX, midY);
+        ctx.lineTo(x, y + zagOffsets[i] * ZAG_AMP);
+      }
+
+      // Extra rapid jitter overlaid lines for "electric" feel
+      for (let j = 0; j < 2; j++) {
+        ctx.moveTo(0, y + (Math.random()-0.5)*ZAG_AMP*0.5);
+        for (let i = 1; i <= ZAG_SEGS; i++) {
+          ctx.lineTo(i * W / ZAG_SEGS, y + (Math.random()-0.5)*ZAG_AMP*1.2);
+        }
+      }
+
+      ctx.strokeStyle = '#b347ff';
+      ctx.lineWidth   = 1.8;
+
+    } else {
+      // Clean straight line
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.strokeStyle = 'rgba(0,200,255,0.7)';
+      ctx.lineWidth   = 1.5;
+    }
+
+    // Fade near top and bottom edges
+    const edgeFade = Math.min(y / 60, 1, (H - y) / 60);
+    ctx.globalAlpha = edgeFade;
+    ctx.stroke();
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  function tick() {
+    requestAnimationFrame(tick);
+
+    if (paused) {
+      pauseCt++;
+      if (pauseCt >= PAUSE) { paused = false; pauseCt = 0; sweepY = -4; }
+      ctx.clearRect(0, 0, W, H);
+      return;
+    }
+
+    sweepY += SPEED;
+    if (sweepY > H + 4) { paused = true; sweepY = H; }
+
+    drawSweep(sweepY);
+  }
+  tick();
 })();
 </script>
 
