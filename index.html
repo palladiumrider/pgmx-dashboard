@@ -171,18 +171,16 @@
     background:rgba(0,200,255,0.15); box-shadow:0 0 22px rgba(0,200,255,0.25);
   }
   /* Scroll pip */
-    position:absolute; bottom:max(26px,calc(20px + env(safe-area-inset-bottom)));
-    left:50%; transform:translateX(-50%);
-    z-index:10; display:flex; flex-direction:column; align-items:center; gap:6px;
-    opacity:0; animation:heroFade 0.6s ease forwards 2.4s;
-    background:none; border:none; cursor:pointer; -webkit-tap-highlight-color:transparent;
-  }
-  .hero-scroll span { font-family:'DM Mono',monospace; font-size:0.55rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); }
-  .hero-scroll-arrow {
-    width:26px; height:26px; border:1px solid rgba(0,200,255,0.22); border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    animation:bounceDown 2s ease-in-out infinite;
-  }
+  <button class="hero-scroll" onclick="document.getElementById('dashboard').scrollIntoView({behavior:'smooth'})">
+    <span>Scroll</span>
+    <div class="hero-scroll-arrow">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M6 2V10" stroke="#00c8ff" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M3 7L6 10L9 7" stroke="#00c8ff" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </button>
+</section>
   @keyframes bounceDown { 0%,100%{transform:translateY(0);} 50%{transform:translateY(5px);} }
 
   @media (max-width:480px) {
