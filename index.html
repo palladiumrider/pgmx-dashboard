@@ -136,16 +136,33 @@
   @keyframes heroFade { to { opacity:1; transform:translateY(0); } }
   @keyframes fadeUp   { to { opacity:1; transform:translateY(0); } }
 
+  /* ── HERO UPDATE BADGE ── */
+  .hero-update {
+    display:flex; align-items:center; gap:9px;
+    font-family:'DM Mono',monospace; font-size:0.6rem;
+    letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--muted);
+    background:rgba(0,200,255,0.05); border:1px solid rgba(0,200,255,0.16);
+    padding:6px 16px; border-radius:2px; margin-top:18px;
+    opacity:0; animation:heroFade 0.5s ease forwards 1.2s;
+  }
+  .hero-update-dot {
+    width:6px; height:6px; border-radius:50%; flex-shrink:0;
+    background:var(--neon-green);
+    box-shadow:0 0 7px var(--neon-green);
+    animation:blink 1.6s ease-in-out infinite;
+  }
+  .hero-update-label { color:var(--muted); }
+  .hero-update-ts { color:var(--neon-blue); letter-spacing:0.1em; }
+
   /* Enter button */
   .hero-enter {
-    position:absolute; bottom:max(72px,calc(56px + env(safe-area-inset-bottom)));
-    left:50%; transform:translateX(-50%);
-    z-index:10; display:inline-block;
+    display:inline-block;
     font-family:'DM Mono',monospace; font-size:0.62rem;
     letter-spacing:0.2em; text-transform:uppercase; color:var(--neon-blue);
     background:rgba(0,200,255,0.07); border:1px solid rgba(0,200,255,0.28);
     padding:11px 26px; border-radius:2px; cursor:pointer;
-    opacity:0; animation:heroFade 0.6s ease forwards 2.1s;
+    opacity:0; animation:heroFade 0.6s ease forwards 1.6s;
     transition:background 0.18s, box-shadow 0.18s;
     white-space:nowrap; text-decoration:none;
     -webkit-tap-highlight-color:transparent;
@@ -154,7 +171,6 @@
     background:rgba(0,200,255,0.15); box-shadow:0 0 22px rgba(0,200,255,0.25);
   }
   /* Scroll pip */
-  .hero-scroll {
     position:absolute; bottom:max(26px,calc(20px + env(safe-area-inset-bottom)));
     left:50%; transform:translateX(-50%);
     z-index:10; display:flex; flex-direction:column; align-items:center; gap:6px;
@@ -442,17 +458,17 @@
   <div id="hero-canvas-wrap"></div>
 
   <div class="hero-content">
-    <div class="hero-logo">PGMx</div>
+    <div class="hero-logo">PGM<span style="-webkit-text-fill-color:inherit;font-size:0.72em;vertical-align:baseline;">x</span></div>
     <div class="hero-tagline">A first take on GFEX PGM data</div>
     <div class="hero-sub">Platinum · Palladium · Guangzhou Futures Exchange</div>
     <div class="hero-divider"></div>
-    <div class="hero-live">
-      <div class="hero-live-dot"></div>
-      Live — Updated Daily
+    <div class="hero-update" id="hero-update-badge" style="display:none">
+      <span class="hero-update-dot"></span>
+      <span class="hero-update-label">Last update</span>
+      <span class="hero-update-ts" id="hero-update-ts">—</span>
     </div>
+    <a class="hero-enter" href="#dashboard" style="pointer-events:auto;margin-top:10px;">Enter Dashboard ↓</a>
   </div>
-
-  <a class="hero-enter" href="#dashboard">Enter Dashboard ↓</a>
 
   <button class="hero-scroll" onclick="document.getElementById('dashboard').scrollIntoView({behavior:'smooth'})">
     <span>Scroll</span>
@@ -1380,6 +1396,13 @@ async function init() {
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     pgmxData=await res.json();
     populateStats(pgmxData);
+
+    // Populate hero last-update badge
+    if (pgmxData.generated) {
+      const badge = document.getElementById('hero-update-badge');
+      document.getElementById('hero-update-ts').textContent = pgmxData.generated;
+      if (badge) badge.style.display = 'flex';
+    }
     try {
       const csr = await fetch('data/custom-spot.json?v='+Date.now());
       if (csr.ok) {
