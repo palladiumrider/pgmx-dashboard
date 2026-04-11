@@ -1400,7 +1400,25 @@ async function init() {
     // Populate hero last-update badge
     if (pgmxData.generated) {
       const badge = document.getElementById('hero-update-badge');
-      document.getElementById('hero-update-ts').textContent = pgmxData.generated;
+      const tsEl  = document.getElementById('hero-update-ts');
+      try {
+        const d = new Date(pgmxData.generated);
+        if (!isNaN(d)) {
+          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          const day  = d.getUTCDate();
+          const mon  = months[d.getUTCMonth()];
+          const yr   = d.getUTCFullYear();
+          let   hr   = d.getUTCHours();
+          const min  = String(d.getUTCMinutes()).padStart(2,'0');
+          const ampm = hr >= 12 ? 'pm' : 'am';
+          hr = hr % 12 || 12;
+          tsEl.textContent = `${day} ${mon} ${yr} ${hr}:${min} ${ampm} GMT`;
+        } else {
+          tsEl.textContent = pgmxData.generated;
+        }
+      } catch(_) {
+        tsEl.textContent = pgmxData.generated;
+      }
       if (badge) badge.style.display = 'flex';
     }
     try {
