@@ -965,22 +965,34 @@ There have been no notable changes in open interest nor volumes. Meanwhile, loco
   <div class="spot-modal-overlay" id="spotModalOverlay" onclick="handleSpotOverlay(event)">
     <div class="spot-modal">
       <button class="spot-modal-close" onclick="closeSpotModal()">✕</button>
-      <div class="spot-modal-title">Custom Spot Prices</div>
-      <div class="spot-modal-sub">I need your help inputting today's 8 AM London spot price for platinum and palladium, along with the values for T-2 and one week ago. Thank you! Others will see your input and can also overwrite your values if they disagree.</div>
+      <div class="spot-modal-title">Custom Spot &amp; Forward</div>
+      <div class="spot-modal-sub">Enter the 8 AM London spot price ($/oz) and optionally override the forward adjustment (% p.a., act/360) for each period. Forward inputs left blank use the current default. Others will see your spot input and can overwrite.</div>
 
       <div class="spot-section-label pt">Platinum</div>
       <div class="spot-input-grid">
         <div class="spot-input-group">
-          <label class="spot-input-label">Today</label>
+          <label class="spot-input-label">Spot — Today</label>
           <input class="spot-input-field" id="si-pt-today" type="number" step="0.01" placeholder="e.g. 1913.5">
+          <div style="margin-top:6px">
+            <label class="spot-input-label" style="color:var(--neon-blue);opacity:0.7">Fwd % p.a.</label>
+            <input class="spot-input-field" id="fi-pt-today" type="number" step="0.01" placeholder="def. −1.00" style="border-color:rgba(0,200,255,0.2);font-size:0.78rem;padding:6px 10px;">
+          </div>
         </div>
         <div class="spot-input-group">
-          <label class="spot-input-label">T-2 (<span id="si-pt-dod-label">—</span>)</label>
+          <label class="spot-input-label">Spot — T-2 (<span id="si-pt-dod-label">—</span>)</label>
           <input class="spot-input-field" id="si-pt-dod" type="number" step="0.01" placeholder="e.g. 1977.9">
+          <div style="margin-top:6px">
+            <label class="spot-input-label" style="color:var(--neon-blue);opacity:0.7">Fwd % p.a.</label>
+            <input class="spot-input-field" id="fi-pt-dod" type="number" step="0.01" placeholder="def. −4.75" style="border-color:rgba(0,200,255,0.2);font-size:0.78rem;padding:6px 10px;">
+          </div>
         </div>
         <div class="spot-input-group">
-          <label class="spot-input-label">Last Wk (<span id="si-pt-wow-label">—</span>)</label>
+          <label class="spot-input-label">Spot — Last Wk (<span id="si-pt-wow-label">—</span>)</label>
           <input class="spot-input-field" id="si-pt-wow" type="number" step="0.01" placeholder="e.g. 2109.2">
+          <div style="margin-top:6px">
+            <label class="spot-input-label" style="color:var(--neon-blue);opacity:0.7">Fwd % p.a.</label>
+            <input class="spot-input-field" id="fi-pt-wow" type="number" step="0.01" placeholder="def. −5.50" style="border-color:rgba(0,200,255,0.2);font-size:0.78rem;padding:6px 10px;">
+          </div>
         </div>
       </div>
 
@@ -989,21 +1001,33 @@ There have been no notable changes in open interest nor volumes. Meanwhile, loco
       <div class="spot-section-label pd">Palladium</div>
       <div class="spot-input-grid">
         <div class="spot-input-group">
-          <label class="spot-input-label">Today</label>
+          <label class="spot-input-label">Spot — Today</label>
           <input class="spot-input-field" id="si-pd-today" type="number" step="0.01" placeholder="e.g. 1412.5">
+          <div style="margin-top:6px">
+            <label class="spot-input-label" style="color:var(--neon-orange);opacity:0.7">Fwd % p.a.</label>
+            <input class="spot-input-field" id="fi-pd-today" type="number" step="0.01" placeholder="def. +0.50" style="border-color:rgba(255,140,0,0.2);font-size:0.78rem;padding:6px 10px;">
+          </div>
         </div>
         <div class="spot-input-group">
-          <label class="spot-input-label">T-2 (<span id="si-pd-dod-label">—</span>)</label>
+          <label class="spot-input-label">Spot — T-2 (<span id="si-pd-dod-label">—</span>)</label>
           <input class="spot-input-field" id="si-pd-dod" type="number" step="0.01" placeholder="e.g. 1420.0">
+          <div style="margin-top:6px">
+            <label class="spot-input-label" style="color:var(--neon-orange);opacity:0.7">Fwd % p.a.</label>
+            <input class="spot-input-field" id="fi-pd-dod" type="number" step="0.01" placeholder="def. 0.00" style="border-color:rgba(255,140,0,0.2);font-size:0.78rem;padding:6px 10px;">
+          </div>
         </div>
         <div class="spot-input-group">
-          <label class="spot-input-label">Last Wk (<span id="si-pd-wow-label">—</span>)</label>
+          <label class="spot-input-label">Spot — Last Wk (<span id="si-pd-wow-label">—</span>)</label>
           <input class="spot-input-field" id="si-pd-wow" type="number" step="0.01" placeholder="e.g. 1603.5">
+          <div style="margin-top:6px">
+            <label class="spot-input-label" style="color:var(--neon-orange);opacity:0.7">Fwd % p.a.</label>
+            <input class="spot-input-field" id="fi-pd-wow" type="number" step="0.01" placeholder="def. −0.50" style="border-color:rgba(255,140,0,0.2);font-size:0.78rem;padding:6px 10px;">
+          </div>
         </div>
       </div>
 
       <button class="spot-calc-btn" onclick="applyCustomSpot()">Calculate Premium / Discount →</button>
-      <button class="spot-reset-btn" onclick="resetToApiSpot()">Reset to API prices</button>
+      <button class="spot-reset-btn" onclick="resetToApiSpot()">Reset to API prices &amp; default forwards</button>
       <div class="spot-status" id="spot-status"></div>
     </div>
   </div>
@@ -1229,13 +1253,11 @@ function fillGauge(metal, d) {
 
   const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
 
-  // ── HARDCODED FORWARD ADJUSTMENTS ────────────────────────────────────────
-  // Today & T-2: PT = -4.75%, PD =  0.00%
-  // Last Wk:     PT = -5.50%, PD = -0.50%
-  // All forwards use act/360 day count convention.
-  const adjToday = metal === 'pt' ? -1.00 : 0.50;
-  const adjDod   = metal === 'pt' ? -4.75 : 0.00;  // T-2 unchanged
-  const adjWow   = metal === 'pt' ? -5.50 : -0.50;
+  // ── FORWARD ADJUSTMENTS (act/360) ────────────────────────────────────────
+  // Pulled from customFwd if set, otherwise DEFAULT_FWD.
+  const adjToday = getAdj(metal, 'today');
+  const adjDod   = getAdj(metal, 'dod');
+  const adjWow   = getAdj(metal, 'wow');
 
   // Recalculate Fwd $ using act/360: Fwd = Spot x (1 + adj%/100 x days/360)
   // days = calendar days from spot value date (trade + 2 biz days) to 26-Jun-2026
@@ -1636,6 +1658,28 @@ async function handleSubmit(e) {
 }
 
 
+// ── CUSTOM FORWARD RATES ──────────────────────────────────────────────────────
+// Default forward adjustments (% p.a., act/360). Overridable via modal.
+const DEFAULT_FWD = {
+  pt: { today: -1.00, dod: -4.75, wow: -5.50 },
+  pd: { today:  0.50, dod:  0.00, wow: -0.50 }
+};
+let customFwd = null; // null = use defaults
+
+function getAdj(metal, period) {
+  if (customFwd && customFwd[metal] && customFwd[metal][period] != null) {
+    return customFwd[metal][period];
+  }
+  return DEFAULT_FWD[metal][period];
+}
+
+function openFwdModal() { openSpotModal(); }
+function closeFwdModal() { closeSpotModal(); }
+function handleFwdOverlay(e) { handleSpotOverlay(e); }
+function applyCustomFwd() { applyCustomSpot(); }
+function resetToDefaultFwd() { resetToApiSpot(); }
+
+
 // ── CUSTOM SPOT MODAL ─────────────────────────────────────────────────────────
 let usingCustomSpot = false;
 
@@ -1646,7 +1690,7 @@ function openSpotModal() {
     document.getElementById('si-pt-wow-label').textContent = pgmxData.date_wow || '—';
     document.getElementById('si-pd-dod-label').textContent = pgmxData.date_dod || '—';
     document.getElementById('si-pd-wow-label').textContent = pgmxData.date_wow || '—';
-    // Pre-fill with current API values
+    // Pre-fill spot with current API values
     if (!usingCustomSpot) {
       document.getElementById('si-pt-today').value = pgmxData.pt_spot_usd_oz || '';
       document.getElementById('si-pt-dod').value   = pgmxData.pt_spot_dod    || '';
@@ -1655,6 +1699,14 @@ function openSpotModal() {
       document.getElementById('si-pd-dod').value   = pgmxData.pd_spot_dod    || '';
       document.getElementById('si-pd-wow').value   = pgmxData.pd_spot_wow    || '';
     }
+    // Pre-fill forward inputs with current active values (custom if set, else defaults)
+    const fwdSrc = customFwd || DEFAULT_FWD;
+    document.getElementById('fi-pt-today').value = fwdSrc.pt.today ?? '';
+    document.getElementById('fi-pt-dod').value   = fwdSrc.pt.dod   ?? '';
+    document.getElementById('fi-pt-wow').value   = fwdSrc.pt.wow   ?? '';
+    document.getElementById('fi-pd-today').value = fwdSrc.pd.today ?? '';
+    document.getElementById('fi-pd-dod').value   = fwdSrc.pd.dod   ?? '';
+    document.getElementById('fi-pd-wow').value   = fwdSrc.pd.wow   ?? '';
   }
   document.getElementById('spotModalOverlay').classList.add('open');
 }
@@ -1705,32 +1757,32 @@ function buildCustomData(ptToday, ptDod, ptWow, pdToday, pdDod, pdWow) {
   const custom = JSON.parse(JSON.stringify(pgmxData));
   if (ptToday) {
     custom.pt_spot_usd_oz = ptToday;
-    const r = calcPremiumJS(pgmxData.pt_gfex_settle_cny_g, ptToday, pgmxData.cny_usd_rate, -1.00, pgmxData.date_today);
+    const r = calcPremiumJS(pgmxData.pt_gfex_settle_cny_g, ptToday, pgmxData.cny_usd_rate, getAdj('pt','today'), pgmxData.date_today);
     if (r) { custom.pt_premium_usd_oz = r.premUsd; custom.pt_premium_pct = r.premPct; custom.pt_fwd_usd_oz = r.fwdUsdOz; }
   }
   if (ptDod) {
     custom.pt_spot_dod = ptDod;
-    const r = calcPremiumJS(pgmxData.pt_gfex_settle_dod, ptDod, pgmxData.cny_usd_rate, -4.75, pgmxData.date_dod);
+    const r = calcPremiumJS(pgmxData.pt_gfex_settle_dod, ptDod, pgmxData.cny_usd_rate, getAdj('pt','dod'), pgmxData.date_dod);
     if (r) { custom.pt_premium_usd_oz_dod = r.premUsd; custom.pt_premium_pct_dod = r.premPct; custom.pt_fwd_dod = r.fwdUsdOz; }
   }
   if (ptWow) {
     custom.pt_spot_wow = ptWow;
-    const r = calcPremiumJS(pgmxData.pt_gfex_settle_wow, ptWow, pgmxData.cny_usd_rate, -5.50, pgmxData.date_wow);
+    const r = calcPremiumJS(pgmxData.pt_gfex_settle_wow, ptWow, pgmxData.cny_usd_rate, getAdj('pt','wow'), pgmxData.date_wow);
     if (r) { custom.pt_premium_usd_oz_wow = r.premUsd; custom.pt_premium_pct_wow = r.premPct; custom.pt_fwd_wow = r.fwdUsdOz; }
   }
   if (pdToday) {
     custom.pd_spot_usd_oz = pdToday;
-    const r = calcPremiumJS(pgmxData.pd_gfex_settle_cny_g, pdToday, pgmxData.cny_usd_rate, 0.50, pgmxData.date_today);
+    const r = calcPremiumJS(pgmxData.pd_gfex_settle_cny_g, pdToday, pgmxData.cny_usd_rate, getAdj('pd','today'), pgmxData.date_today);
     if (r) { custom.pd_premium_usd_oz = r.premUsd; custom.pd_premium_pct = r.premPct; custom.pd_fwd_usd_oz = r.fwdUsdOz; }
   }
   if (pdDod) {
     custom.pd_spot_dod = pdDod;
-    const r = calcPremiumJS(pgmxData.pd_gfex_settle_dod, pdDod, pgmxData.cny_usd_rate, 0.00, pgmxData.date_dod);
+    const r = calcPremiumJS(pgmxData.pd_gfex_settle_dod, pdDod, pgmxData.cny_usd_rate, getAdj('pd','dod'), pgmxData.date_dod);
     if (r) { custom.pd_premium_usd_oz_dod = r.premUsd; custom.pd_premium_pct_dod = r.premPct; custom.pd_fwd_dod = r.fwdUsdOz; }
   }
   if (pdWow) {
     custom.pd_spot_wow = pdWow;
-    const r = calcPremiumJS(pgmxData.pd_gfex_settle_wow, pdWow, pgmxData.cny_usd_rate, -0.50, pgmxData.date_wow);
+    const r = calcPremiumJS(pgmxData.pd_gfex_settle_wow, pdWow, pgmxData.cny_usd_rate, getAdj('pd','wow'), pgmxData.date_wow);
     if (r) { custom.pd_premium_usd_oz_wow = r.premUsd; custom.pd_premium_pct_wow = r.premPct; custom.pd_fwd_wow = r.fwdUsdOz; }
   }
   return custom;
@@ -1746,8 +1798,28 @@ async function applyCustomSpot() {
   const pdDod   = parseFloat(document.getElementById('si-pd-dod').value)   || null;
   const pdWow   = parseFloat(document.getElementById('si-pd-wow').value)   || null;
 
+  // Read forward inputs — blank means use default
+  const parseFwd = (id, def) => { const v = document.getElementById(id).value; return v !== '' ? parseFloat(v) : def; };
+  customFwd = {
+    pt: {
+      today: parseFwd('fi-pt-today', DEFAULT_FWD.pt.today),
+      dod:   parseFwd('fi-pt-dod',   DEFAULT_FWD.pt.dod),
+      wow:   parseFwd('fi-pt-wow',   DEFAULT_FWD.pt.wow)
+    },
+    pd: {
+      today: parseFwd('fi-pd-today', DEFAULT_FWD.pd.today),
+      dod:   parseFwd('fi-pd-dod',   DEFAULT_FWD.pd.dod),
+      wow:   parseFwd('fi-pd-wow',   DEFAULT_FWD.pd.wow)
+    }
+  };
+
   if (!ptToday && !ptDod && !ptWow && !pdToday && !pdDod && !pdWow) {
-    document.getElementById('spot-status').textContent = 'Please enter at least one price.';
+    // Only forwards changed — re-fill gauges with existing pgmxData
+    fillGauge('pt', pgmxData);
+    fillGauge('pd', pgmxData);
+    document.getElementById('spot-status').textContent = '✦ Forward rates applied';
+    document.getElementById('spot-status').className = 'spot-status active';
+    setTimeout(closeSpotModal, 1200);
     return;
   }
 
@@ -1786,10 +1858,15 @@ async function applyCustomSpot() {
 
 function resetToApiSpot() {
   if (!pgmxData) return;
+  customFwd = null;
   fillGauge('pt', pgmxData);
   fillGauge('pd', pgmxData);
   usingCustomSpot = false;
-  document.getElementById('spot-status').textContent = 'Reset to API prices';
+  // Clear all forward inputs back to blank (defaults will show as placeholders)
+  ['fi-pt-today','fi-pt-dod','fi-pt-wow','fi-pd-today','fi-pd-dod','fi-pd-wow'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('spot-status').textContent = 'Reset to API prices & default forwards';
   document.getElementById('spot-status').className = 'spot-status';
   setTimeout(closeSpotModal, 800);
 }
