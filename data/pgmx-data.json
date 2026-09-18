@@ -1,95 +1,53 @@
 {
-  "generated": "2026-09-17T13:14:52",
-  "date_today": "2026-09-17",
-  "date_dod": "2026-09-16",
-  "date_dod_spot": "2026-09-15",
-  "date_wow": "2026-09-10",
-  "cny_usd_rate": 0.1491,
-  "usd_cny_rate": 6.7069,
+  "generated": "2026-09-18T12:55:35",
+  "date_today": "2026-09-18",
+  "date_dod": "2026-09-17",
+  "date_dod_spot": "2026-09-16",
+  "date_wow": "2026-09-11",
+  "cny_usd_rate": 0.14909,
+  "usd_cny_rate": 6.7074,
   "pt_fwd_adjustment": -5.5,
   "pd_fwd_adjustment": -0.5,
-  "fwd_days": -87,
-  "pt_fwd_days_dod": -84,
-  "pt_fwd_days_wow": -80,
-  "pt_spot_usd_oz": 1799.87,
-  "pt_spot_dod": 1754.51,
-  "pt_spot_wow": 1899.48,
-  "pt_fwd_usd_oz": 1823.79,
-  "pt_fwd_dod": 1776.76,
-  "pt_fwd_wow": 1922.7,
-  "pt_gfex_settle_cny_g": 436.95,
-  "pt_gfex_settle_dod": 433.55,
-  "pt_gfex_settle_wow": 461.0,
-  "pt_premium_usd_oz": -30.54,
-  "pt_premium_pct": -1.67,
-  "pt_premium_usd_oz_dod": 1.34,
+  "fwd_days": -88,
+  "pt_fwd_days_dod": -87,
+  "pt_fwd_days_wow": -81,
+  "pt_spot_usd_oz": 1805.77,
+  "pt_spot_dod": 1776.07,
+  "pt_spot_wow": 1779.21,
+  "pt_fwd_usd_oz": 1830.05,
+  "pt_fwd_dod": 1798.86,
+  "pt_fwd_wow": 1801.23,
+  "pt_gfex_settle_cny_g": 441.9,
+  "pt_gfex_settle_dod": 438.7,
+  "pt_gfex_settle_wow": 436.8,
+  "pt_premium_usd_oz": -16.61,
+  "pt_premium_pct": -0.91,
+  "pt_premium_usd_oz_dod": 1.45,
   "pt_premium_pct_dod": 0.08,
-  "pt_premium_usd_oz_wow": -30.62,
-  "pt_premium_pct_wow": -1.59,
-  "pd_spot_usd_oz": 1302.3,
-  "pd_spot_dod": 1284.89,
-  "pd_spot_wow": 1361.96,
-  "pd_fwd_usd_oz": 1303.87,
-  "pd_fwd_dod": 1286.37,
-  "pd_fwd_wow": 1363.47,
-  "pd_gfex_settle_cny_g": 304.0,
-  "pd_gfex_settle_dod": 303.65,
-  "pd_gfex_settle_wow": 317.2,
-  "pd_premium_usd_oz": -56.25,
-  "pd_premium_pct": -4.31,
-  "pd_premium_usd_oz_dod": -41.02,
-  "pd_premium_pct_dod": -3.19,
-  "pd_premium_usd_oz_wow": -61.59,
-  "pd_premium_pct_wow": -4.52,
+  "pt_premium_usd_oz_wow": -8.72,
+  "pt_premium_pct_wow": -0.48,
+  "pd_spot_usd_oz": 1327.35,
+  "pd_spot_dod": 1307.82,
+  "pd_spot_wow": 1284.8,
+  "pd_fwd_usd_oz": 1328.97,
+  "pd_fwd_dod": 1309.35,
+  "pd_fwd_wow": 1286.25,
+  "pd_gfex_settle_cny_g": 307.1,
+  "pd_gfex_settle_dod": 306.8,
+  "pd_gfex_settle_wow": 303.7,
+  "pd_premium_usd_oz": -68.71,
+  "pd_premium_pct": -5.17,
+  "pd_premium_usd_oz_dod": -50.32,
+  "pd_premium_pct_dod": -3.84,
+  "pd_premium_usd_oz_wow": -39.95,
+  "pd_premium_pct_wow": -3.11,
   "pt_premium_series": [
     {
-      "date": "2026-03-23",
-      "gfex_usd": 1839.2,
-      "spot": 1879.51,
-      "prem_usd": -40.31,
-      "prem_pct": -2.14
-    },
-    {
-      "date": "2026-03-24",
-      "gfex_usd": 1893.12,
-      "spot": 1834.09,
-      "prem_usd": 59.03,
-      "prem_pct": 3.22
-    },
-    {
-      "date": "2026-03-25",
-      "gfex_usd": 2026.07,
-      "spot": 1987.88,
-      "prem_usd": 38.19,
-      "prem_pct": 1.92
-    },
-    {
-      "date": "2026-03-27",
-      "gfex_usd": 1925.13,
-      "spot": 1831.08,
-      "prem_usd": 94.05,
-      "prem_pct": 5.14
-    },
-    {
-      "date": "2026-03-30",
-      "gfex_usd": 1959.85,
-      "spot": 1835.7,
-      "prem_usd": 124.15,
-      "prem_pct": 6.76
-    },
-    {
-      "date": "2026-03-31",
-      "gfex_usd": 1979.72,
-      "spot": 1885.03,
-      "prem_usd": 94.69,
-      "prem_pct": 5.02
-    },
-    {
-      "date": "2026-04-01",
-      "gfex_usd": 2025.21,
-      "spot": 1979.62,
-      "prem_usd": 45.59,
-      "prem_pct": 2.3
+      "date": "2026-03-26",
+      "gfex_usd": 1945.58,
+      "spot": 1924.26,
+      "prem_usd": 21.32,
+      "prem_pct": 1.11
     },
     {
       "date": "2026-04-02",
@@ -97,27 +55,6 @@
       "spot": 1969.11,
       "prem_usd": -13.91,
       "prem_pct": -0.71
-    },
-    {
-      "date": "2026-04-03",
-      "gfex_usd": 1986.52,
-      "spot": 1971.95,
-      "prem_usd": 14.57,
-      "prem_pct": 0.74
-    },
-    {
-      "date": "2026-04-07",
-      "gfex_usd": 2010.41,
-      "spot": 1984.14,
-      "prem_usd": 26.27,
-      "prem_pct": 1.32
-    },
-    {
-      "date": "2026-04-08",
-      "gfex_usd": 2083.64,
-      "spot": 2034.64,
-      "prem_usd": 49.0,
-      "prem_pct": 2.41
     },
     {
       "date": "2026-04-09",
@@ -895,57 +832,22 @@
       "spot": 1776.07,
       "prem_usd": 24.36,
       "prem_pct": 1.37
+    },
+    {
+      "date": "2026-09-17",
+      "gfex_usd": 1793.13,
+      "spot": 1768.54,
+      "prem_usd": 24.59,
+      "prem_pct": 1.39
     }
   ],
   "pd_premium_series": [
     {
-      "date": "2026-03-23",
-      "gfex_usd": 1351.54,
-      "spot": 1412.52,
-      "prem_usd": -60.98,
-      "prem_pct": -4.32
-    },
-    {
-      "date": "2026-03-24",
-      "gfex_usd": 1399.78,
-      "spot": 1386.97,
-      "prem_usd": 12.81,
-      "prem_pct": 0.92
-    },
-    {
-      "date": "2026-03-25",
-      "gfex_usd": 1481.1,
-      "spot": 1465.63,
-      "prem_usd": 15.47,
-      "prem_pct": 1.06
-    },
-    {
-      "date": "2026-03-27",
-      "gfex_usd": 1413.74,
-      "spot": 1386.96,
-      "prem_usd": 26.78,
-      "prem_pct": 1.93
-    },
-    {
-      "date": "2026-03-30",
-      "gfex_usd": 1426.58,
-      "spot": 1368.87,
-      "prem_usd": 57.71,
-      "prem_pct": 4.22
-    },
-    {
-      "date": "2026-03-31",
-      "gfex_usd": 1449.59,
-      "spot": 1406.77,
-      "prem_usd": 42.82,
-      "prem_pct": 3.04
-    },
-    {
-      "date": "2026-04-01",
-      "gfex_usd": 1493.23,
-      "spot": 1495.7,
-      "prem_usd": -2.47,
-      "prem_pct": -0.17
+      "date": "2026-03-26",
+      "gfex_usd": 1433.15,
+      "spot": 1429.33,
+      "prem_usd": 3.82,
+      "prem_pct": 0.27
     },
     {
       "date": "2026-04-02",
@@ -953,27 +855,6 @@
       "spot": 1472.46,
       "prem_usd": -19.68,
       "prem_pct": -1.34
-    },
-    {
-      "date": "2026-04-03",
-      "gfex_usd": 1510.25,
-      "spot": 1492.07,
-      "prem_usd": 18.18,
-      "prem_pct": 1.22
-    },
-    {
-      "date": "2026-04-07",
-      "gfex_usd": 1498.03,
-      "spot": 1489.47,
-      "prem_usd": 8.56,
-      "prem_pct": 0.57
-    },
-    {
-      "date": "2026-04-08",
-      "gfex_usd": 1544.19,
-      "spot": 1519.65,
-      "prem_usd": 24.54,
-      "prem_pct": 1.61
     },
     {
       "date": "2026-04-09",
@@ -1751,6 +1632,13 @@
       "spot": 1307.82,
       "prem_usd": -48.71,
       "prem_pct": -3.72
+    },
+    {
+      "date": "2026-09-17",
+      "gfex_usd": 1247.54,
+      "spot": 1290.83,
+      "prem_usd": -43.29,
+      "prem_pct": -3.35
     }
   ],
   "platinum": {
@@ -1786,6 +1674,16 @@
           "settle": 507.85,
           "volume": 33,
           "oi": 440
+        },
+        {
+          "date": "2026-03-26",
+          "open": 500.0,
+          "high": 500.0,
+          "low": 478.05,
+          "close": 478.05,
+          "settle": 488.45,
+          "volume": 24,
+          "oi": 437
         },
         {
           "date": "2026-03-27",
@@ -2986,45 +2884,55 @@
           "settle": 436.95,
           "volume": 4423,
           "oi": 11453
+        },
+        {
+          "date": "2026-09-18",
+          "open": 439.65,
+          "high": 447.1,
+          "low": 437.6,
+          "close": 446.1,
+          "settle": 441.9,
+          "volume": 5811,
+          "oi": 11908
         }
       ]
     },
     "oi_table": [
       {
         "contract": "pt2610",
-        "oi": 5365,
-        "dod_pct": -8.76,
-        "wow_pct": -32.46
+        "oi": 5009,
+        "dod_pct": -6.64,
+        "wow_pct": -26.32
       },
       {
         "contract": "pt2612",
-        "oi": 11453,
-        "dod_pct": 6.67,
-        "wow_pct": 20.85
+        "oi": 11908,
+        "dod_pct": 3.97,
+        "wow_pct": 18.69
       },
       {
         "contract": "pt2702",
-        "oi": 741,
-        "dod_pct": 5.11,
-        "wow_pct": 19.13
+        "oi": 758,
+        "dod_pct": 2.29,
+        "wow_pct": 11.14
       },
       {
         "contract": "pt2704",
-        "oi": 143,
-        "dod_pct": 48.96,
-        "wow_pct": 60.67
+        "oi": 140,
+        "dod_pct": -2.1,
+        "wow_pct": 48.94
       },
       {
         "contract": "pt2706",
-        "oi": 63,
-        "dod_pct": 0.0,
-        "wow_pct": 90.91
+        "oi": 64,
+        "dod_pct": 1.59,
+        "wow_pct": 82.86
       },
       {
         "contract": "pt2708",
-        "oi": 74,
-        "dod_pct": 19.35,
-        "wow_pct": 640.0
+        "oi": 73,
+        "dod_pct": -1.35,
+        "wow_pct": 563.64
       }
     ]
   },
@@ -3061,6 +2969,16 @@
           "settle": 371.25,
           "volume": 72,
           "oi": 382
+        },
+        {
+          "date": "2026-03-26",
+          "open": 420.0,
+          "high": 420.0,
+          "low": 351.8,
+          "close": 354.0,
+          "settle": 359.8,
+          "volume": 43,
+          "oi": 387
         },
         {
           "date": "2026-03-27",
@@ -4261,33 +4179,43 @@
           "settle": 304.0,
           "volume": 3432,
           "oi": 4112
+        },
+        {
+          "date": "2026-09-18",
+          "open": 307.0,
+          "high": 311.7,
+          "low": 304.0,
+          "close": 311.2,
+          "settle": 307.1,
+          "volume": 4908,
+          "oi": 3825
         }
       ]
     },
     "oi_table": [
       {
         "contract": "pd2610",
-        "oi": 4112,
-        "dod_pct": -6.57,
-        "wow_pct": -29.5
+        "oi": 3825,
+        "dod_pct": -6.98,
+        "wow_pct": -30.83
       },
       {
         "contract": "pd2612",
-        "oi": 7492,
-        "dod_pct": 5.15,
-        "wow_pct": 28.75
+        "oi": 7863,
+        "dod_pct": 4.95,
+        "wow_pct": 21.32
       },
       {
         "contract": "pd2702",
-        "oi": 657,
-        "dod_pct": -3.38,
-        "wow_pct": 40.38
+        "oi": 660,
+        "dod_pct": 0.46,
+        "wow_pct": -3.23
       },
       {
         "contract": "pd2704",
         "oi": 154,
         "dod_pct": 0.0,
-        "wow_pct": 352.94
+        "wow_pct": 0.0
       },
       {
         "contract": "pd2706",
