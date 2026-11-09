@@ -1,72 +1,334 @@
 {
-  "generated": "2026-11-06T16:03:33",
-  "date_today": "2026-11-06",
-  "date_dod": "2026-11-05",
-  "date_dod_spot": "2026-11-04",
-  "date_wow": "2026-10-29",
-  "cny_usd_rate": 0.1499,
-  "usd_cny_rate": 6.6711,
+  "generated": "2026-11-09T18:30:52",
+  "date_today": "2026-11-09",
+  "date_dod": "2026-11-06",
+  "date_dod_spot": "2026-11-05",
+  "date_wow": "2026-11-02",
+  "cny_usd_rate": 0.14986,
+  "usd_cny_rate": 6.6729,
   "pt_fwd_adjustment": -5.5,
   "pd_fwd_adjustment": -0.5,
-  "fwd_days": null,
-  "pt_fwd_days_dod": null,
-  "pt_fwd_days_wow": null,
-  "pt_spot_usd_oz": null,
-  "pt_spot_dod": null,
-  "pt_spot_wow": null,
-  "pt_fwd_usd_oz": null,
-  "pt_fwd_dod": null,
-  "pt_fwd_wow": null,
-  "pt_gfex_settle_cny_g": 369.05,
-  "pt_gfex_settle_dod": 347.65,
-  "pt_gfex_settle_wow": 371.75,
-  "pt_premium_usd_oz": null,
-  "pt_premium_pct": null,
-  "pt_premium_usd_oz_dod": null,
-  "pt_premium_pct_dod": null,
-  "pt_premium_usd_oz_wow": null,
-  "pt_premium_pct_wow": null,
-  "pd_spot_usd_oz": null,
-  "pd_spot_dod": null,
-  "pd_spot_wow": null,
-  "pd_fwd_usd_oz": null,
-  "pd_fwd_dod": null,
-  "pd_fwd_wow": null,
-  "pd_gfex_settle_cny_g": 242.0,
-  "pd_gfex_settle_dod": 224.3,
-  "pd_gfex_settle_wow": 237.6,
-  "pd_premium_usd_oz": null,
-  "pd_premium_pct": null,
-  "pd_premium_usd_oz_dod": null,
-  "pd_premium_pct_dod": null,
-  "pd_premium_usd_oz_wow": null,
-  "pd_premium_pct_wow": null,
-  "pt_premium_series": [],
-  "pd_premium_series": [],
+  "fwd_days": -138,
+  "pt_fwd_days_dod": -137,
+  "pt_fwd_days_wow": -131,
+  "pt_spot_usd_oz": 1533.98,
+  "pt_spot_dod": 1511.19,
+  "pt_spot_wow": 1447.52,
+  "pt_fwd_usd_oz": 1566.32,
+  "pt_fwd_dod": 1542.59,
+  "pt_fwd_wow": 1476.49,
+  "pt_gfex_settle_cny_g": 378.0,
+  "pt_gfex_settle_dod": 370.5,
+  "pt_gfex_settle_wow": 348.35,
+  "pt_premium_usd_oz": -7.1,
+  "pt_premium_pct": -0.45,
+  "pt_premium_usd_oz_dod": -13.28,
+  "pt_premium_pct_dod": -0.86,
+  "pt_premium_usd_oz_wow": -34.2,
+  "pt_premium_pct_wow": -2.32,
+  "pd_spot_usd_oz": 1024.78,
+  "pd_spot_dod": 1030.38,
+  "pd_spot_wow": 965.28,
+  "pd_fwd_usd_oz": 1026.74,
+  "pd_fwd_dod": 1032.33,
+  "pd_fwd_wow": 967.04,
+  "pd_gfex_settle_cny_g": 245.75,
+  "pd_gfex_settle_dod": 240.8,
+  "pd_gfex_settle_wow": 228.7,
+  "pd_premium_usd_oz": -13.04,
+  "pd_premium_pct": -1.27,
+  "pd_premium_usd_oz_dod": -38.38,
+  "pd_premium_pct_dod": -3.72,
+  "pd_premium_usd_oz_wow": -20.14,
+  "pd_premium_pct_wow": -2.08,
+  "pt_premium_series": [
+    {
+      "date": "2026-10-12",
+      "gfex_usd": 1711.23,
+      "spot": 1689.86,
+      "prem_usd": 21.37,
+      "prem_pct": 1.26
+    },
+    {
+      "date": "2026-10-13",
+      "gfex_usd": 1699.28,
+      "spot": 1660.33,
+      "prem_usd": 38.95,
+      "prem_pct": 2.35
+    },
+    {
+      "date": "2026-10-14",
+      "gfex_usd": 1667.95,
+      "spot": 1601.1,
+      "prem_usd": 66.85,
+      "prem_pct": 4.18
+    },
+    {
+      "date": "2026-10-15",
+      "gfex_usd": 1618.92,
+      "spot": 1625.83,
+      "prem_usd": -6.91,
+      "prem_pct": -0.43
+    },
+    {
+      "date": "2026-10-16",
+      "gfex_usd": 1639.26,
+      "spot": 1638.15,
+      "prem_usd": 1.11,
+      "prem_pct": 0.07
+    },
+    {
+      "date": "2026-10-19",
+      "gfex_usd": 1662.82,
+      "spot": 1638.97,
+      "prem_usd": 23.85,
+      "prem_pct": 1.46
+    },
+    {
+      "date": "2026-10-20",
+      "gfex_usd": 1653.18,
+      "spot": 1656.33,
+      "prem_usd": -3.15,
+      "prem_pct": -0.19
+    },
+    {
+      "date": "2026-10-21",
+      "gfex_usd": 1646.52,
+      "spot": 1616.93,
+      "prem_usd": 29.59,
+      "prem_pct": 1.83
+    },
+    {
+      "date": "2026-10-22",
+      "gfex_usd": 1609.64,
+      "spot": 1565.85,
+      "prem_usd": 43.79,
+      "prem_pct": 2.8
+    },
+    {
+      "date": "2026-10-23",
+      "gfex_usd": 1574.5,
+      "spot": 1553.39,
+      "prem_usd": 21.11,
+      "prem_pct": 1.36
+    },
+    {
+      "date": "2026-10-26",
+      "gfex_usd": 1555.41,
+      "spot": 1529.01,
+      "prem_usd": 26.4,
+      "prem_pct": 1.73
+    },
+    {
+      "date": "2026-10-27",
+      "gfex_usd": 1522.7,
+      "spot": 1547.08,
+      "prem_usd": -24.38,
+      "prem_pct": -1.58
+    },
+    {
+      "date": "2026-10-28",
+      "gfex_usd": 1548.6,
+      "spot": 1542.28,
+      "prem_usd": 6.32,
+      "prem_pct": 0.41
+    },
+    {
+      "date": "2026-10-29",
+      "gfex_usd": 1536.0,
+      "spot": 1483.01,
+      "prem_usd": 52.99,
+      "prem_pct": 3.57
+    },
+    {
+      "date": "2026-10-30",
+      "gfex_usd": 1471.02,
+      "spot": 1433.92,
+      "prem_usd": 37.1,
+      "prem_pct": 2.59
+    },
+    {
+      "date": "2026-11-02",
+      "gfex_usd": 1442.29,
+      "spot": 1447.52,
+      "prem_usd": -5.23,
+      "prem_pct": -0.36
+    },
+    {
+      "date": "2026-11-03",
+      "gfex_usd": 1446.09,
+      "spot": 1424.86,
+      "prem_usd": 21.23,
+      "prem_pct": 1.49
+    },
+    {
+      "date": "2026-11-04",
+      "gfex_usd": 1434.13,
+      "spot": 1501.98,
+      "prem_usd": -67.85,
+      "prem_pct": -4.52
+    },
+    {
+      "date": "2026-11-05",
+      "gfex_usd": 1529.31,
+      "spot": 1511.19,
+      "prem_usd": 18.12,
+      "prem_pct": 1.2
+    },
+    {
+      "date": "2026-11-06",
+      "gfex_usd": 1522.71,
+      "spot": 1537.48,
+      "prem_usd": -14.77,
+      "prem_pct": -0.96
+    }
+  ],
+  "pd_premium_series": [
+    {
+      "date": "2026-10-12",
+      "gfex_usd": 1132.8,
+      "spot": 1140.57,
+      "prem_usd": -7.77,
+      "prem_pct": -0.68
+    },
+    {
+      "date": "2026-10-13",
+      "gfex_usd": 1112.71,
+      "spot": 1124.46,
+      "prem_usd": -11.75,
+      "prem_pct": -1.04
+    },
+    {
+      "date": "2026-10-14",
+      "gfex_usd": 1102.85,
+      "spot": 1100.27,
+      "prem_usd": 2.58,
+      "prem_pct": 0.23
+    },
+    {
+      "date": "2026-10-15",
+      "gfex_usd": 1083.53,
+      "spot": 1129.75,
+      "prem_usd": -46.22,
+      "prem_pct": -4.09
+    },
+    {
+      "date": "2026-10-16",
+      "gfex_usd": 1107.59,
+      "spot": 1113.54,
+      "prem_usd": -5.95,
+      "prem_pct": -0.53
+    },
+    {
+      "date": "2026-10-19",
+      "gfex_usd": 1107.04,
+      "spot": 1116.71,
+      "prem_usd": -9.67,
+      "prem_pct": -0.87
+    },
+    {
+      "date": "2026-10-20",
+      "gfex_usd": 1087.49,
+      "spot": 1103.69,
+      "prem_usd": -16.2,
+      "prem_pct": -1.47
+    },
+    {
+      "date": "2026-10-21",
+      "gfex_usd": 1066.83,
+      "spot": 1084.14,
+      "prem_usd": -17.31,
+      "prem_pct": -1.6
+    },
+    {
+      "date": "2026-10-22",
+      "gfex_usd": 1034.33,
+      "spot": 1053.97,
+      "prem_usd": -19.64,
+      "prem_pct": -1.86
+    },
+    {
+      "date": "2026-10-23",
+      "gfex_usd": 1020.09,
+      "spot": 1044.17,
+      "prem_usd": -24.08,
+      "prem_pct": -2.31
+    },
+    {
+      "date": "2026-10-26",
+      "gfex_usd": 1020.64,
+      "spot": 1046.4,
+      "prem_usd": -25.76,
+      "prem_pct": -2.46
+    },
+    {
+      "date": "2026-10-27",
+      "gfex_usd": 1011.0,
+      "spot": 1038.71,
+      "prem_usd": -27.71,
+      "prem_pct": -2.67
+    },
+    {
+      "date": "2026-10-28",
+      "gfex_usd": 1007.7,
+      "spot": 1022.02,
+      "prem_usd": -14.32,
+      "prem_pct": -1.4
+    },
+    {
+      "date": "2026-10-29",
+      "gfex_usd": 981.72,
+      "spot": 1002.16,
+      "prem_usd": -20.44,
+      "prem_pct": -2.04
+    },
+    {
+      "date": "2026-10-30",
+      "gfex_usd": 956.96,
+      "spot": 976.3,
+      "prem_usd": -19.34,
+      "prem_pct": -1.98
+    },
+    {
+      "date": "2026-11-02",
+      "gfex_usd": 946.9,
+      "spot": 965.28,
+      "prem_usd": -18.38,
+      "prem_pct": -1.9
+    },
+    {
+      "date": "2026-11-03",
+      "gfex_usd": 920.33,
+      "spot": 939.96,
+      "prem_usd": -19.63,
+      "prem_pct": -2.09
+    },
+    {
+      "date": "2026-11-04",
+      "gfex_usd": 925.28,
+      "spot": 1005.47,
+      "prem_usd": -80.19,
+      "prem_pct": -7.98
+    },
+    {
+      "date": "2026-11-05",
+      "gfex_usd": 993.95,
+      "spot": 1030.38,
+      "prem_usd": -36.43,
+      "prem_pct": -3.54
+    },
+    {
+      "date": "2026-11-06",
+      "gfex_usd": 998.5,
+      "spot": 1022.43,
+      "prem_usd": -23.93,
+      "prem_pct": -2.34
+    }
+  ],
   "platinum": {
     "candlestick": {
       "contract": "pt2612",
       "data": [
-        {
-          "date": "2026-05-12",
-          "open": 530.2,
-          "high": 535.0,
-          "low": 523.45,
-          "close": 524.0,
-          "settle": 530.5,
-          "volume": 76,
-          "oi": 515
-        },
-        {
-          "date": "2026-05-13",
-          "open": 533.35,
-          "high": 536.65,
-          "low": 530.05,
-          "close": 534.0,
-          "settle": 533.95,
-          "volume": 30,
-          "oi": 511
-        },
         {
           "date": "2026-05-14",
           "open": 538.0,
@@ -136,6 +398,16 @@
           "settle": 495.85,
           "volume": 43,
           "oi": 560
+        },
+        {
+          "date": "2026-05-25",
+          "open": 496.95,
+          "high": 499.95,
+          "low": 494.4,
+          "close": 495.3,
+          "settle": 495.95,
+          "volume": 138,
+          "oi": 597
         },
         {
           "date": "2026-05-26",
@@ -208,6 +480,16 @@
           "oi": 700
         },
         {
+          "date": "2026-06-04",
+          "open": 469.15,
+          "high": 474.3,
+          "low": 468.95,
+          "close": 472.85,
+          "settle": 471.65,
+          "volume": 71,
+          "oi": 715
+        },
+        {
           "date": "2026-06-05",
           "open": 469.25,
           "high": 470.9,
@@ -216,6 +498,16 @@
           "settle": 468.95,
           "volume": 76,
           "oi": 722
+        },
+        {
+          "date": "2026-06-08",
+          "open": 450.35,
+          "high": 450.35,
+          "low": 435.7,
+          "close": 443.15,
+          "settle": 441.8,
+          "volume": 119,
+          "oi": 736
         },
         {
           "date": "2026-06-09",
@@ -258,6 +550,16 @@
           "oi": 767
         },
         {
+          "date": "2026-06-15",
+          "open": 446.2,
+          "high": 448.25,
+          "low": 443.25,
+          "close": 443.85,
+          "settle": 445.2,
+          "volume": 82,
+          "oi": 776
+        },
+        {
           "date": "2026-06-16",
           "open": 443.0,
           "high": 443.0,
@@ -296,6 +598,16 @@
           "settle": 422.55,
           "volume": 172,
           "oi": 851
+        },
+        {
+          "date": "2026-06-23",
+          "open": 423.65,
+          "high": 423.65,
+          "low": 407.55,
+          "close": 409.75,
+          "settle": 414.35,
+          "volume": 157,
+          "oi": 876
         },
         {
           "date": "2026-06-24",
@@ -366,6 +678,16 @@
           "settle": 401.05,
           "volume": 109,
           "oi": 996
+        },
+        {
+          "date": "2026-07-03",
+          "open": 413.45,
+          "high": 417.8,
+          "low": 412.35,
+          "close": 413.8,
+          "settle": 415.3,
+          "volume": 176,
+          "oi": 1036
         },
         {
           "date": "2026-07-06",
@@ -488,6 +810,16 @@
           "oi": 1480
         },
         {
+          "date": "2026-07-22",
+          "open": 408.5,
+          "high": 419.4,
+          "low": 408.4,
+          "close": 413.1,
+          "settle": 416.55,
+          "volume": 426,
+          "oi": 1649
+        },
+        {
           "date": "2026-07-23",
           "open": 413.1,
           "high": 416.25,
@@ -568,6 +900,16 @@
           "oi": 2559
         },
         {
+          "date": "2026-08-04",
+          "open": 402.6,
+          "high": 409.15,
+          "low": 402.6,
+          "close": 407.9,
+          "settle": 406.5,
+          "volume": 70,
+          "oi": 2581
+        },
+        {
           "date": "2026-08-05",
           "open": 425.55,
           "high": 443.0,
@@ -618,6 +960,16 @@
           "oi": 2968
         },
         {
+          "date": "2026-08-12",
+          "open": 430.5,
+          "high": 439.0,
+          "low": 430.5,
+          "close": 436.8,
+          "settle": 436.55,
+          "volume": 260,
+          "oi": 3047
+        },
+        {
           "date": "2026-08-13",
           "open": 437.7,
           "high": 439.2,
@@ -658,6 +1010,16 @@
           "oi": 3261
         },
         {
+          "date": "2026-08-19",
+          "open": 426.2,
+          "high": 428.75,
+          "low": 424.1,
+          "close": 425.65,
+          "settle": 426.2,
+          "volume": 389,
+          "oi": 3350
+        },
+        {
           "date": "2026-08-20",
           "open": 443.6,
           "high": 447.0,
@@ -676,6 +1038,16 @@
           "settle": 458.7,
           "volume": 629,
           "oi": 3455
+        },
+        {
+          "date": "2026-08-24",
+          "open": 463.8,
+          "high": 471.35,
+          "low": 458.45,
+          "close": 471.0,
+          "settle": 464.25,
+          "volume": 547,
+          "oi": 3501
         },
         {
           "date": "2026-08-25",
@@ -736,6 +1108,16 @@
           "settle": 445.2,
           "volume": 1113,
           "oi": 4944
+        },
+        {
+          "date": "2026-09-02",
+          "open": 430.0,
+          "high": 431.45,
+          "low": 423.55,
+          "close": 429.5,
+          "settle": 427.9,
+          "volume": 1711,
+          "oi": 5857
         },
         {
           "date": "2026-09-03",
@@ -818,6 +1200,16 @@
           "oi": 10196
         },
         {
+          "date": "2026-09-15",
+          "open": 430.95,
+          "high": 436.75,
+          "low": 430.6,
+          "close": 435.25,
+          "settle": 433.55,
+          "volume": 2490,
+          "oi": 10340
+        },
+        {
           "date": "2026-09-16",
           "open": 435.05,
           "high": 442.0,
@@ -846,6 +1238,16 @@
           "settle": 441.9,
           "volume": 5811,
           "oi": 11908
+        },
+        {
+          "date": "2026-09-21",
+          "open": 444.05,
+          "high": 446.65,
+          "low": 440.9,
+          "close": 443.35,
+          "settle": 443.6,
+          "volume": 4798,
+          "oi": 12296
         },
         {
           "date": "2026-09-22",
@@ -878,6 +1280,16 @@
           "oi": 13249
         },
         {
+          "date": "2026-09-28",
+          "open": 425.2,
+          "high": 428.15,
+          "low": 419.7,
+          "close": 424.1,
+          "settle": 424.4,
+          "volume": 6434,
+          "oi": 13466
+        },
+        {
           "date": "2026-09-29",
           "open": 420.55,
           "high": 421.35,
@@ -886,6 +1298,26 @@
           "settle": 414.75,
           "volume": 5985,
           "oi": 13688
+        },
+        {
+          "date": "2026-09-30",
+          "open": 418.0,
+          "high": 420.6,
+          "low": 415.1,
+          "close": 420.2,
+          "settle": 417.4,
+          "volume": 3717,
+          "oi": 14034
+        },
+        {
+          "date": "2026-10-08",
+          "open": 403.0,
+          "high": 407.15,
+          "low": 400.55,
+          "close": 405.1,
+          "settle": 404.7,
+          "volume": 5613,
+          "oi": 14431
         },
         {
           "date": "2026-10-09",
@@ -938,6 +1370,16 @@
           "oi": 15619
         },
         {
+          "date": "2026-10-16",
+          "open": 395.5,
+          "high": 402.0,
+          "low": 394.5,
+          "close": 400.85,
+          "settle": 398.2,
+          "volume": 4697,
+          "oi": 15409
+        },
+        {
           "date": "2026-10-19",
           "open": 401.0,
           "high": 406.15,
@@ -986,6 +1428,16 @@
           "settle": 381.55,
           "volume": 8423,
           "oi": 16218
+        },
+        {
+          "date": "2026-10-26",
+          "open": 378.5,
+          "high": 379.45,
+          "low": 374.35,
+          "close": 376.05,
+          "settle": 376.8,
+          "volume": 5483,
+          "oi": 16429
         },
         {
           "date": "2026-10-27",
@@ -1038,6 +1490,16 @@
           "oi": 12656
         },
         {
+          "date": "2026-11-03",
+          "open": 353.5,
+          "high": 354.2,
+          "low": 338.65,
+          "close": 347.6,
+          "settle": 350.55,
+          "volume": 6574,
+          "oi": 11945
+        },
+        {
           "date": "2026-11-04",
           "open": 343.5,
           "high": 359.3,
@@ -1066,45 +1528,55 @@
           "settle": 369.05,
           "volume": 6965,
           "oi": 9045
+        },
+        {
+          "date": "2026-11-09",
+          "open": 379.0,
+          "high": 380.65,
+          "low": 375.5,
+          "close": 375.8,
+          "settle": 378.0,
+          "volume": 5393,
+          "oi": 8305
         }
       ]
     },
     "oi_table": [
       {
         "contract": "pt2612",
-        "oi": 9045,
-        "dod_pct": -3.6,
-        "wow_pct": -40.31
+        "oi": 8305,
+        "dod_pct": -8.18,
+        "wow_pct": -34.38
       },
       {
         "contract": "pt2702",
-        "oi": 8458,
-        "dod_pct": 2.71,
-        "wow_pct": 138.12
+        "oi": 8905,
+        "dod_pct": 5.28,
+        "wow_pct": 62.29
       },
       {
         "contract": "pt2704",
-        "oi": 685,
-        "dod_pct": 5.87,
-        "wow_pct": 8.04
+        "oi": 683,
+        "dod_pct": -0.29,
+        "wow_pct": 11.6
       },
       {
         "contract": "pt2706",
-        "oi": 450,
-        "dod_pct": 0.45,
-        "wow_pct": 12.22
+        "oi": 456,
+        "dod_pct": 1.33,
+        "wow_pct": 8.83
       },
       {
         "contract": "pt2708",
         "oi": 147,
-        "dod_pct": 1.38,
-        "wow_pct": 30.09
+        "dod_pct": 0.0,
+        "wow_pct": 2.8
       },
       {
         "contract": "pt2710",
         "oi": 33,
         "dod_pct": 0.0,
-        "wow_pct": 200.0
+        "wow_pct": 37.5
       }
     ]
   },
@@ -1112,26 +1584,6 @@
     "candlestick": {
       "contract": "pd2612",
       "data": [
-        {
-          "date": "2026-05-12",
-          "open": 375.8,
-          "high": 375.8,
-          "low": 368.0,
-          "close": 368.0,
-          "settle": 372.2,
-          "volume": 15,
-          "oi": 222
-        },
-        {
-          "date": "2026-05-13",
-          "open": 371.25,
-          "high": 372.0,
-          "low": 370.0,
-          "close": 372.0,
-          "settle": 370.5,
-          "volume": 11,
-          "oi": 223
-        },
         {
           "date": "2026-05-14",
           "open": 372.5,
@@ -1201,6 +1653,16 @@
           "settle": 344.75,
           "volume": 40,
           "oi": 322
+        },
+        {
+          "date": "2026-05-25",
+          "open": 350.0,
+          "high": 350.0,
+          "low": 343.45,
+          "close": 343.45,
+          "settle": 345.75,
+          "volume": 33,
+          "oi": 335
         },
         {
           "date": "2026-05-26",
@@ -1273,6 +1735,16 @@
           "oi": 619
         },
         {
+          "date": "2026-06-04",
+          "open": 325.3,
+          "high": 325.65,
+          "low": 320.2,
+          "close": 320.2,
+          "settle": 321.95,
+          "volume": 69,
+          "oi": 638
+        },
+        {
           "date": "2026-06-05",
           "open": 313.85,
           "high": 314.55,
@@ -1281,6 +1753,16 @@
           "settle": 313.15,
           "volume": 96,
           "oi": 668
+        },
+        {
+          "date": "2026-06-08",
+          "open": 299.1,
+          "high": 303.0,
+          "low": 291.65,
+          "close": 292.9,
+          "settle": 297.75,
+          "volume": 197,
+          "oi": 657
         },
         {
           "date": "2026-06-09",
@@ -1323,6 +1805,16 @@
           "oi": 642
         },
         {
+          "date": "2026-06-15",
+          "open": 328.45,
+          "high": 328.45,
+          "low": 322.35,
+          "close": 323.0,
+          "settle": 324.25,
+          "volume": 89,
+          "oi": 649
+        },
+        {
           "date": "2026-06-16",
           "open": 321.9,
           "high": 322.9,
@@ -1361,6 +1853,16 @@
           "settle": 306.55,
           "volume": 48,
           "oi": 633
+        },
+        {
+          "date": "2026-06-23",
+          "open": 306.25,
+          "high": 306.25,
+          "low": 298.05,
+          "close": 298.45,
+          "settle": 301.4,
+          "volume": 46,
+          "oi": 631
         },
         {
           "date": "2026-06-24",
@@ -1431,6 +1933,16 @@
           "settle": 300.95,
           "volume": 84,
           "oi": 666
+        },
+        {
+          "date": "2026-07-03",
+          "open": 307.9,
+          "high": 316.8,
+          "low": 307.9,
+          "close": 312.9,
+          "settle": 313.5,
+          "volume": 60,
+          "oi": 659
         },
         {
           "date": "2026-07-06",
@@ -1553,6 +2065,16 @@
           "oi": 813
         },
         {
+          "date": "2026-07-22",
+          "open": 312.0,
+          "high": 323.0,
+          "low": 312.0,
+          "close": 317.9,
+          "settle": 319.7,
+          "volume": 171,
+          "oi": 788
+        },
+        {
           "date": "2026-07-23",
           "open": 319.7,
           "high": 319.7,
@@ -1633,6 +2155,16 @@
           "oi": 1166
         },
         {
+          "date": "2026-08-04",
+          "open": 305.0,
+          "high": 309.0,
+          "low": 303.35,
+          "close": 308.5,
+          "settle": 305.95,
+          "volume": 74,
+          "oi": 1176
+        },
+        {
           "date": "2026-08-05",
           "open": 322.0,
           "high": 332.3,
@@ -1683,6 +2215,16 @@
           "oi": 1250
         },
         {
+          "date": "2026-08-12",
+          "open": 324.55,
+          "high": 330.65,
+          "low": 324.55,
+          "close": 328.6,
+          "settle": 328.7,
+          "volume": 204,
+          "oi": 1329
+        },
+        {
           "date": "2026-08-13",
           "open": 329.3,
           "high": 330.0,
@@ -1723,6 +2265,16 @@
           "oi": 1716
         },
         {
+          "date": "2026-08-19",
+          "open": 312.85,
+          "high": 312.85,
+          "low": 309.9,
+          "close": 311.35,
+          "settle": 311.3,
+          "volume": 262,
+          "oi": 1797
+        },
+        {
           "date": "2026-08-20",
           "open": 322.0,
           "high": 322.0,
@@ -1741,6 +2293,16 @@
           "settle": 324.65,
           "volume": 356,
           "oi": 1890
+        },
+        {
+          "date": "2026-08-24",
+          "open": 327.1,
+          "high": 327.75,
+          "low": 322.65,
+          "close": 326.55,
+          "settle": 325.55,
+          "volume": 327,
+          "oi": 1911
         },
         {
           "date": "2026-08-25",
@@ -1801,6 +2363,16 @@
           "settle": 323.65,
           "volume": 1528,
           "oi": 3405
+        },
+        {
+          "date": "2026-09-02",
+          "open": 314.65,
+          "high": 314.65,
+          "low": 302.6,
+          "close": 308.0,
+          "settle": 307.15,
+          "volume": 1941,
+          "oi": 4332
         },
         {
           "date": "2026-09-03",
@@ -1883,6 +2455,16 @@
           "oi": 6787
         },
         {
+          "date": "2026-09-15",
+          "open": 305.55,
+          "high": 307.65,
+          "low": 303.8,
+          "close": 306.4,
+          "settle": 306.2,
+          "volume": 1207,
+          "oi": 6895
+        },
+        {
           "date": "2026-09-16",
           "open": 309.9,
           "high": 310.8,
@@ -1911,6 +2493,16 @@
           "settle": 309.7,
           "volume": 4623,
           "oi": 7863
+        },
+        {
+          "date": "2026-09-21",
+          "open": 311.95,
+          "high": 312.55,
+          "low": 308.65,
+          "close": 311.5,
+          "settle": 310.95,
+          "volume": 3524,
+          "oi": 7959
         },
         {
           "date": "2026-09-22",
@@ -1943,6 +2535,16 @@
           "oi": 9822
         },
         {
+          "date": "2026-09-28",
+          "open": 297.0,
+          "high": 297.6,
+          "low": 290.0,
+          "close": 291.7,
+          "settle": 292.65,
+          "volume": 7274,
+          "oi": 11010
+        },
+        {
           "date": "2026-09-29",
           "open": 288.45,
           "high": 288.95,
@@ -1951,6 +2553,26 @@
           "settle": 286.05,
           "volume": 5701,
           "oi": 11682
+        },
+        {
+          "date": "2026-09-30",
+          "open": 290.0,
+          "high": 292.55,
+          "low": 287.8,
+          "close": 292.2,
+          "settle": 289.4,
+          "volume": 3646,
+          "oi": 11599
+        },
+        {
+          "date": "2026-10-08",
+          "open": 269.8,
+          "high": 273.25,
+          "low": 268.75,
+          "close": 270.65,
+          "settle": 271.0,
+          "volume": 7942,
+          "oi": 12622
         },
         {
           "date": "2026-10-09",
@@ -2003,6 +2625,16 @@
           "oi": 13978
         },
         {
+          "date": "2026-10-16",
+          "open": 266.0,
+          "high": 273.45,
+          "low": 265.25,
+          "close": 268.4,
+          "settle": 269.05,
+          "volume": 6339,
+          "oi": 13994
+        },
+        {
           "date": "2026-10-19",
           "open": 267.0,
           "high": 270.2,
@@ -2051,6 +2683,16 @@
           "settle": 247.2,
           "volume": 10947,
           "oi": 15235
+        },
+        {
+          "date": "2026-10-26",
+          "open": 248.0,
+          "high": 249.75,
+          "low": 245.4,
+          "close": 246.45,
+          "settle": 247.25,
+          "volume": 5748,
+          "oi": 15135
         },
         {
           "date": "2026-10-27",
@@ -2103,6 +2745,16 @@
           "oi": 13203
         },
         {
+          "date": "2026-11-03",
+          "open": 227.4,
+          "high": 227.7,
+          "low": 219.25,
+          "close": 219.95,
+          "settle": 223.1,
+          "volume": 8265,
+          "oi": 12983
+        },
+        {
           "date": "2026-11-04",
           "open": 217.5,
           "high": 232.7,
@@ -2131,45 +2783,55 @@
           "settle": 242.0,
           "volume": 9552,
           "oi": 7973
+        },
+        {
+          "date": "2026-11-09",
+          "open": 245.4,
+          "high": 249.2,
+          "low": 243.65,
+          "close": 244.65,
+          "settle": 245.75,
+          "volume": 6413,
+          "oi": 7486
         }
       ]
     },
     "oi_table": [
       {
         "contract": "pd2612",
-        "oi": 7973,
-        "dod_pct": -9.7,
-        "wow_pct": -48.42
+        "oi": 7486,
+        "dod_pct": -6.11,
+        "wow_pct": -43.3
       },
       {
         "contract": "pd2702",
-        "oi": 5900,
-        "dod_pct": 0.39,
-        "wow_pct": 122.05
+        "oi": 6312,
+        "dod_pct": 6.98,
+        "wow_pct": 43.49
       },
       {
         "contract": "pd2704",
-        "oi": 588,
-        "dod_pct": 0.86,
-        "wow_pct": 29.8
+        "oi": 592,
+        "dod_pct": 0.68,
+        "wow_pct": 26.5
       },
       {
         "contract": "pd2706",
-        "oi": 151,
-        "dod_pct": -5.03,
-        "wow_pct": 32.46
+        "oi": 157,
+        "dod_pct": 3.97,
+        "wow_pct": 29.75
       },
       {
         "contract": "pd2708",
         "oi": 47,
         "dod_pct": 0.0,
-        "wow_pct": 80.77
+        "wow_pct": 56.67
       },
       {
         "contract": "pd2710",
         "oi": 6,
         "dod_pct": 0.0,
-        "wow_pct": 100.0
+        "wow_pct": 200.0
       }
     ]
   }
